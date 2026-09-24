@@ -40,11 +40,16 @@ export function localSuggest({ cravings = [], sweet = null }: Partial<SuggestInp
     const hits = p.tags.filter((t) => crave.has(t)).map((t) => label(CRAVINGS, t));
     const sweetTxt = sweet ? label(SWEET, sweet) + ' sweetness' : '';
     const why = hits.length ? `Picked for ${hits.join(' and ')}${sweetTxt ? ', ' + sweetTxt : ''}.` : (sweetTxt ? `Picked for ${sweetTxt}.` : '');
+    // If a base was swapped for your options, describe what's really in it, not the original recipe.
+    const swapped = batter !== p.batter || frosting !== p.frosting;
+    const desc = swapped && batter && frosting
+      ? `Our ${p.name}, made with ${ALL[batter]?.name.toLowerCase()} sponge and ${ALL[frosting]?.name.toLowerCase()} to fit your options.`
+      : p.desc;
     return {
       score,
       suggestion: batter && frosting ? {
         name: p.name,
-        reason: `${p.desc} ${why}`.trim(),
+        reason: `${desc} ${why}`.trim(),
         batter,
         frosting,
         toppings: p.toppings.filter((t) => !lockReason(ALL[t], opts)),

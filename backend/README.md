@@ -10,7 +10,7 @@ TypeScript (strict) on Node 20+, Express 5, SQLite. No external services are req
 cd backend
 npm install
 npm run dev        # run the TypeScript directly (tsx), restarts on file changes → http://localhost:4000
-npm test           # 18 tests: rules + every endpoint over HTTP
+npm test           # 19 tests: rules + every endpoint over HTTP
 npm run typecheck  # tsc --noEmit over src and tests
 npm run build      # compile src/ → dist/
 npm start          # run the compiled server (production)
@@ -133,16 +133,9 @@ The server checks all of the following:
 
 Order codes look like `CK-7QK4MZ`.
 
-## Connecting the demo frontend
+## Frontend
 
-The response shapes match what `demo/cake-kitchen-demo.html` already reads (`id` = `code`, `bakeryName`, `customer.mode`, `photo`, …). To switch the demo from its artifact `db`/`localStorage` store to this API:
-
-- `store.add(o)` → `POST /api/orders`. Keep the returned `order` and `trackingToken`.
-- `store.update(id, {status})` → `POST /api/bakery/orders/:code/status` with a bakery key.
-- `store.watchAll` → `new EventSource('/api/bakery/stream?key=…')`. Handle `snapshot` and `order`.
-- `store.watchOne` → `new EventSource('/api/orders/:code/stream?token=…')`.
-- `aiSuggest()` → `POST /api/ai/suggest`.
-- `priceOf` / `statsOf` can stay in the browser for instant feedback. The order uses the server's numbers.
+The web app in [`../frontend`](../frontend) uses every endpoint above: the catalog and bakery menus for the kitchen, `/api/quote` for the result page, `/api/orders` for checkout, and the SSE streams for tracking and the dashboard. The response shapes still match what `demo/cake-kitchen-demo.html` reads (`id` = `code`, `bakeryName`, `customer.mode`, `photo`, …).
 
 ## Not built yet
 

@@ -89,6 +89,18 @@ test('local suggestions never include locked ingredients', () => {
   }
 });
 
+test('house suggestions describe swapped ingredients truthfully', () => {
+  const out = localSuggest({ cravings: ['fresh', 'korean'], sweet: 1 }, opts('vegan'));
+  const yuja = out.find((s) => s.name === 'Yuja Sunshine')!;
+  assert.equal(yuja.batter, 'oat');
+  assert.equal(yuja.frosting, 'coconut');
+  assert.doesNotMatch(yuja.reason, /rice|yogurt/i);
+  assert.match(yuja.reason, /vegan oat sponge and coconut cream/);
+  // An untouched recipe keeps its original description.
+  const plain = localSuggest({ cravings: ['fresh', 'korean'], sweet: 1 }, opts()).find((s) => s.name === 'Yuja Sunshine')!;
+  assert.match(plain.reason, /^Rice sponge, tangy yogurt cream/);
+});
+
 test('AI output is re-checked: locked/unknown/misplaced ids are dropped', () => {
   const out = sanitizeSuggestions([
     { name: 'A', reason: 'r', batter: 'vanilla', frosting: 'coconut', toppings: ['straw'] }, // vanilla has milk
