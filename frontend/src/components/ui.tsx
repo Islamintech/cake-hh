@@ -6,11 +6,6 @@ import { useCakeStore } from '@/store/useCakeStore';
 import type { CatalogIndex } from '@/lib/rules';
 import type { Bakery } from '@/lib/types';
 
-/** Render trusted static SVG markup (from lib/art.ts). Never pass user input here. */
-export function Svg({ markup, className }: { markup: string; className?: string }) {
-  return <span className={className} style={{ display: 'contents' }} dangerouslySetInnerHTML={{ __html: markup }} />;
-}
-
 export function Loading({ label = 'Loading…' }: { label?: string }) {
   return <div className="center" role="status"><div className="spinner" aria-hidden="true" /><p className="muted">{label}</p></div>;
 }

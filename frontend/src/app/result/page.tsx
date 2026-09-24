@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
@@ -8,9 +7,11 @@ import { won } from '@/lib/format';
 import { blip } from '@/lib/sound';
 import type { CatalogIndex } from '@/lib/rules';
 import { useCakeStore } from '@/store/useCakeStore';
+import { useCartStore } from '@/store/useCartStore';
+import { useToast } from '@/components/Providers';
 import { CakeView } from '@/components/CakeView';
 import { ErrorCard, Loading, Ready } from '@/components/ui';
-import type { Quote } from '@/lib/types';
+import type { BakeryDetail, Quote } from '@/lib/types';
 
 export default function ResultPage() {
   return <Ready>{(ix) => <Result ix={ix} />}</Ready>;
@@ -20,16 +21,20 @@ const CONFETTI = ['#FF6FA5', '#FFD45E', '#4FC79C', '#7B45B0', '#6FC3FF'];
 
 function Result({ ix }: { ix: CatalogIndex }) {
   const router = useRouter();
-  const { cake, bakeryId, opts, setStep } = useCakeStore();
+  const toast = useToast();
+  const { cake, bakeryId, opts, preset, setStep, startFresh } = useCakeStore();
+  const addToCart = useCartStore((s) => s.add);
   const [quote, setQuote] = useState<Quote | null>(null);
+  const [bakery, setBakeryInfo] = useState<BakeryDetail | null>(null);
   const [error, setError] = useState<{ message: string; details: string[] } | null>(null);
 
   useEffect(() => {
     if (!bakeryId) { router.replace('/bakeries'); return; }
     // The server re-validates the whole design and prices it: this is the price the order will use.
-    api.quote(bakeryId, cake, opts)
-      .then((q) => {
+    Promise.all([api.quote(bakeryId, cake, opts), api.bakery(bakeryId, opts)])
+      .then(([q, b]) => {
         setQuote(q);
+        setBakeryInfo(b);
         setTimeout(() => { blip(523, 0.1); setTimeout(() => blip(659, 0.1), 110); setTimeout(() => blip(784, 0.2), 220); }, 200);
       })
       .catch((e: unknown) => setError({
@@ -42,6 +47,15 @@ function Result({ ix }: { ix: CatalogIndex }) {
     <i key={i} style={{ left: `${(i * 37) % 100}%`, background: CONFETTI[i % 5], animationDelay: `${(i % 7) * 0.08}s` }} />
   )), []);
 
+  const toCart = () => {
+    if (!quote || !bakery) return;
+    const name = preset ? preset.name : 'My custom cake';
+    addToCart({ name, bakeryId: bakery.id, bakeryName: bakery.name, cake: quote.cake, opts, total: quote.total });
+    toast(`${name} is in your cart.`);
+    startFresh();
+    router.push('/cart');
+  };
+
   const editCake = () => { setStep({ layer: cake.layers.length - 1, i: 0, phase: 'finish' }); router.push('/kitchen'); };
 
   if (error) {
@@ -53,7 +67,7 @@ function Result({ ix }: { ix: CatalogIndex }) {
       </div>
     );
   }
-  if (!quote) return <Loading label="Checking your cake with the bakery…" />;
+  if (!quote || !bakery) return <Loading label="Checking your cake with the bakery…" />;
 
   const s = quote.stats;
   const shape = ix.catalog.shapes.find((x) => x.id === quote.cake.shape)?.name;
@@ -96,7 +110,7 @@ function Result({ ix }: { ix: CatalogIndex }) {
           <div className="disc"><span>Guest order, no signup (−{Math.round(ix.catalog.rules.guestDiscount * 100)}%)</span><span>−{won(quote.discount)}</span></div>
           <div className="tot"><span>Total</span><span>{won(quote.total)}</span></div>
         </div>
-        <Link className="btn pink" href="/checkout">Order as guest</Link>
+        <button className="btn" onClick={toCart}>Add to cart</button>
         <button className="btn ghost" onClick={editCake}>Change something</button>
       </div>
     </>

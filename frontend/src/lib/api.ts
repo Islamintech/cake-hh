@@ -52,6 +52,9 @@ export const api = {
   suggest: (body: { occasion: string | null; cravings: string[]; sweet: number | null; text: string; options: string[] }) =>
     request<SuggestResponse>('/api/ai/suggest', post(body)),
 
+  partner: (body: { company: string; location: string; reason: string; products: string; contact: string }) =>
+    request<{ application: { id: string; company: string; createdAt: number } }>('/api/partners', post(body)),
+
   placeOrder: (body: PlaceOrderBody) => request<{ order: Order; trackingToken: string }>('/api/orders', post(body)),
 
   trackOrder: (code: string, token: string) =>

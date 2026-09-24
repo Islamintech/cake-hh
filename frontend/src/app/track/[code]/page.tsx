@@ -106,7 +106,7 @@ function Track({ ix }: { ix: CatalogIndex }) {
         </>
       )}
 
-      <p className="muted small">Demo: open <b>For bakeries</b> (top right) in another tab to accept and update this order. This page updates live.</p>
+      <p className="muted small">Demo: open the menu, then <b>For bakeries</b>, in another tab to accept and update this order. This page updates live.</p>
       <button className="btn ghost" onClick={() => { startFresh(); router.push('/'); }}>Build another cake</button>
     </div>
   );

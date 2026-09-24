@@ -18,17 +18,22 @@ The API address comes from `NEXT_PUBLIC_API_URL`, which defaults to `http://loca
 
 ## Screens
 
+The look follows the mockups in `images/`: black and white, bold uppercase titles, italic body text, pill buttons, a menu drawer on the left and a profile panel on the right.
+
 | Route | What it does | API |
 | --- | --- | --- |
-| `/` | Landing page with the self-building hero cake | `GET /api/bakeries?all=true` (partner list) |
-| `/options` | Dietary options (halal, allergens, vegan, low sugar) | none |
-| `/suggest` | "Halmeoni suggests": occasion, cravings, sweetness | `POST /api/ai/suggest` |
-| `/bakeries` | Bakeries that can make a cake for your options | `GET /api/bakeries?options=…` |
-| `/kitchen` | The game: pan → size → batter → oven → cream → toppings → layers → lettering → box | `GET /api/bakeries/:id?options=…` (menu with lock reasons) |
-| `/result` | Stars, nutrition and the price, confirmed by the server | `POST /api/quote` |
-| `/checkout` | Guest checkout: name, phone, pickup/delivery, date, time | `POST /api/orders` |
+| `/` | Home: photo with **Game** and **Order** | none |
+| `/cakes`, `/cakes/popular` | Ready-made cakes. Tap one to pick a bakery and size, then add it to the cart. Popular = classic flavour pairings (no sales data yet) | `GET /api/bakeries`, `/api/bakeries/:id`, `POST /api/quote` |
+| `/cart` | Cart (saved in this browser); continue shopping or buy | none |
+| `/checkout` | Guest checkout for the whole cart: one order per cake, same contact, date and time | `POST /api/quote`, `POST /api/orders` |
+| `/orders` | Orders placed from this browser, with live status | `GET /api/orders/:code` |
+| `/mood` | "Halmeoni suggests": occasion, cravings, sweetness → order it or play it (`/suggest` redirects here) | `POST /api/ai/suggest` |
+| `/address` | Name, phone and address saved on this device, used at checkout | none |
+| `/partnership` | Bakeries apply to join | `POST /api/partners` |
+| `/about` | About, how it works, partner bakeries | `GET /api/bakeries?all=true` |
+| `/options` → `/bakeries` → `/kitchen` → `/result` | The game: dietary options, bakery, build it, then add to cart | as before |
 | `/track/[code]?t=…` | Live order tracking and "virtual vs real" | `GET /api/orders/:code`, SSE `/stream` |
-| `/bakery` | Bakery dashboard: sign in with a bakery key, see orders live, move them along | `/api/bakery/*`, SSE `/api/bakery/stream` |
+| `/bakery` | Bakery dashboard (menu → For bakeries) | `/api/bakery/*`, SSE `/api/bakery/stream` |
 
 Local demo keys for `/bakery` (printed by the backend at startup): `dev-admin-key` sees every bakery, and `dev-bakery-s1` sees only Seoul Sugar Studio.
 
@@ -37,18 +42,18 @@ Local demo keys for `/bakery` (printed by the backend at startup): `dev-admin-ke
 ```
 src/
 ├── app/            one folder per route (see table above); layout.tsx + globals.css
-├── components/     Providers (catalog, toast, store hydration), Header, CakeView, ui (Ready, chips, badges), landing/
+├── components/     Providers, Header (menu + profile drawers), CakeView, CakeGrid, CakeSheet (add to cart), Shops, icons, ui
 ├── lib/
 │   ├── api.ts      typed API client + SSE helpers (watchOrder, watchBakeryOrders)
 │   ├── types.ts    response types, mirroring backend/src/views
 │   ├── rules.ts    instant price / combos / stations for the kitchen (the server re-checks everything)
 │   ├── cakeSvg.ts  draws a cake as SVG (ported from the demo); all text escaped
-│   ├── art.ts      static illustrations (hero, icons, logo)
+│   ├── presets.ts  ready-made cakes: "from" prices and the Popular list
 │   ├── myOrders.ts tracking links saved in this browser (no accounts)
 │   └── format.ts, sound.ts
-└── store/useCakeStore.ts   the cake being built (Zustand, saved to sessionStorage)
+└── store/          useCakeStore: the cake being built (sessionStorage) · useCartStore: cart + saved details (localStorage)
 ```
 
 - **The server decides.** The catalog, bakery menus (stock and lock reasons), prices, AI suggestions and orders all come from the API. `lib/rules.ts` only gives instant feedback while you build. The result page, checkout and order use the server's numbers.
-- **The design is the demo's.** `globals.css` is the demo's stylesheet (CSS variables, dark mode, animations), and the cake SVG and hero are ported from it. Fonts are self-hosted through `next/font`.
+- **The design comes from `images/`.** `globals.css` defines it as CSS variables (with a dark mode); the kitchen game keeps the demo's animations. Inter and Silkscreen are self-hosted through `next/font`. `public/hero.jpg` is cut from the home mockup.
 - **Refresh-safe.** The cake in progress survives a reload (sessionStorage). Tracking links are saved in localStorage, so closing the tab doesn't lose an order.

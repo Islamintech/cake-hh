@@ -83,7 +83,7 @@ function BakeryList({ ix }: { ix: CatalogIndex }) {
           <Link className="btn sm" href="/options">Change options</Link>
         </div>
       ))}
-      <Link className="btn ghost" href={preset ? '/suggest' : '/options'}>Back</Link>
+      <Link className="btn ghost" href={preset ? '/mood' : '/options'}>Back</Link>
     </div>
   );
 }

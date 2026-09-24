@@ -135,7 +135,7 @@ function Orders({ ix, bakeryKey, staff, onSignOut }: { ix: CatalogIndex; bakeryK
 
       {orders === null && <p className="muted">Connecting to the order feed… If this doesn't go away, check that the backend is running.</p>}
       {orders?.length === 0 && (
-        <div className="card"><b>No orders yet.</b><p className="muted">Switch to Customer view, build a cake and order it. It shows up here right away.</p></div>
+        <div className="card"><b>No orders yet.</b><p className="muted">Open the app in another tab, order a cake, and it shows up here right away.</p></div>
       )}
       {orders?.map((o) => (
         <div key={o.code} className="card ord">

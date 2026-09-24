@@ -5,6 +5,7 @@ import { api, ApiError } from '@/lib/api';
 import { indexCatalog, type CatalogIndex } from '@/lib/rules';
 import { setSoundEnabled } from '@/lib/sound';
 import { useCakeStore } from '@/store/useCakeStore';
+import { useCartStore } from '@/store/useCartStore';
 
 // ---- Catalog: fetched once from the API, shared by every page ----
 
@@ -17,7 +18,7 @@ export const useCatalog = () => useContext(CatalogContext);
 const ToastContext = createContext<(msg: string) => void>(() => {});
 export const useToast = () => useContext(ToastContext);
 
-// ---- Store hydration (sessionStorage is only available after mount) ----
+// ---- Store hydration (session/localStorage are only available after mount) ----
 
 const HydratedContext = createContext(false);
 export const useHydrated = () => useContext(HydratedContext);
@@ -41,10 +42,11 @@ export function Providers({ children }: { children: ReactNode }) {
   }, [attempt]);
 
   useEffect(() => {
-    const unsub = useCakeStore.persist.onFinishHydration(() => setHydrated(true));
-    void useCakeStore.persist.rehydrate();
-    if (useCakeStore.persist.hasHydrated()) setHydrated(true);
-    return unsub;
+    let alive = true;
+    // Both are synchronous storages, so rehydrate() has finished once the promises settle.
+    void Promise.all([useCakeStore.persist.rehydrate(), useCartStore.persist.rehydrate()])
+      .finally(() => { if (alive) setHydrated(true); });
+    return () => { alive = false; };
   }, []);
 
   useEffect(() => { setSoundEnabled(sound); }, [sound]);
