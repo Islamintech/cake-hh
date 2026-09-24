@@ -1,0 +1,1255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cake Kitchen — build a cake, get the real one</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FBF0F1; --surface:#FFFFFF; --surface-2:#FFF7F7; --ink:#3A221E; --muted:#8C6B65; --line:#F0DCDD;
+  --plum:#3A221E; --plum-dark:#1E0F0C; --on-primary:#FFF7F2; --pink:#E0457B; --pink-dark:#B02D5C; --mint:#7FA85A; --butter:#F3CF74;
+  --wall:#F6E1E4; --tile:#EFD0D5; --belt:#3A221E; --belt-2:#5A3A34; --plate:#E9D6D6; --plate-top:#FFFFFF;
+  --lock:#C4ADA9; --danger:#B3263E; --sponge:#EFC98E; --cream:#FFFBF6;
+  --display:"Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif; --pixel:"Silkscreen", ui-monospace, monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1110; --surface:#271917; --surface-2:#2F201D; --ink:#FBEDEA; --muted:#C7A9A3; --line:#43302C;
+    --plum:#F6D9D2; --plum-dark:#B99A93; --on-primary:#2A1714; --wall:#2E1F1D; --tile:#3A2825; --plate:#5A4541; --plate-top:#7A625D; --lock:#6E5A56;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1110; --surface:#271917; --surface-2:#2F201D; --ink:#FBEDEA; --muted:#C7A9A3; --line:#43302C;
+  --plum:#F6D9D2; --plum-dark:#B99A93; --on-primary:#2A1714; --wall:#2E1F1D; --tile:#3A2825; --plate:#5A4541; --plate-top:#7A625D; --lock:#6E5A56;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0; min-height:100%; background:var(--bg); color:var(--ink);
+  font-family:var(--display); font-size:16px; line-height:1.45;
+  -webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit; color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--pink); outline-offset:2px}
+.app{max-width:460px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; background:var(--bg)}
+@media (min-width:700px){ body{background:
+  radial-gradient(circle at 20% 20%, var(--tile) 0 2px, transparent 3px) 0 0/28px 28px, var(--bg)}
+  .app{box-shadow:0 0 0 1px var(--line); background:var(--bg)} }
+
+/* header */
+.top{position:sticky; top:env(safe-area-inset-top,0px); z-index:20; display:flex; align-items:center; justify-content:space-between;
+  padding:10px 14px; background:var(--bg); border-bottom:1px solid var(--line)}
+.brand{border:0; background:none; padding:0; display:flex; white-space:nowrap; align-items:center; gap:8px; font-weight:800; font-size:19px; letter-spacing:-.02em; color:var(--ink)}
+.brand svg{width:26px; height:26px}
+.brand small{font-weight:600; font-size:12px; color:var(--muted)}
+@media (max-width:420px){ .brand small{display:none} .brand{font-size:18px} }
+.link{white-space:nowrap}
+.top-actions{display:flex; gap:6px; align-items:center}
+.link{border:1px solid var(--line); background:var(--surface); border-radius:999px; padding:4px 12px; font-weight:600; font-size:14px}
+.icon-btn{border:1px solid var(--line); background:var(--surface); border-radius:999px; width:34px; height:34px; display:grid; place-items:center; font-size:16px}
+
+main{flex:1; display:flex; flex-direction:column}
+.pad{padding:18px 16px 28px}
+h1{font-size:30px; line-height:1.1; margin:6px 0 10px; font-weight:800; letter-spacing:-.01em}
+h2{font-size:22px; line-height:1.2; margin:4px 0 6px; font-weight:800}
+h3{font-size:17px; margin:18px 0 8px; font-weight:700}
+p{margin:0 0 10px}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+
+/* arcade buttons */
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; border:0; border-radius:16px; padding:12px 18px;
+  font-weight:700; font-size:17px; background:var(--plum); color:var(--on-primary); box-shadow:0 5px 0 var(--plum-dark);
+  transition:transform .08s, box-shadow .08s; width:100%}
+.btn:active{transform:translateY(4px); box-shadow:0 1px 0 var(--plum-dark)}
+.btn.pink{background:var(--pink); box-shadow:0 5px 0 var(--pink-dark)}
+.btn.pink:active{box-shadow:0 1px 0 var(--pink-dark)}
+.btn.ghost{background:var(--surface); color:var(--ink); box-shadow:0 5px 0 var(--line); border:1px solid var(--line)}
+.btn.ghost:active{box-shadow:0 1px 0 var(--line)}
+.btn[disabled]{opacity:.45; pointer-events:none}
+.btn.sm{padding:8px 12px; font-size:15px; border-radius:12px; width:auto; box-shadow:0 3px 0 var(--plum-dark)}
+.btn.sm.ghost{box-shadow:0 3px 0 var(--line)}
+.btn.sm.pink{box-shadow:0 3px 0 var(--pink-dark)}
+.stack{display:grid; gap:14px}
+
+/* chips */
+.chips{display:flex; flex-wrap:wrap; gap:8px}
+.chip{border:2px solid var(--line); background:var(--surface); border-radius:999px; padding:6px 13px; font-weight:600; font-size:15px}
+.chip[aria-pressed="true"]{border-color:var(--plum); background:var(--plum); color:var(--on-primary)}
+
+/* landing */
+.hero-stage{position:relative; height:250px; background:var(--wall); overflow:hidden; border-bottom:1px solid var(--line)}
+.tiles{position:absolute; inset:0; background:
+  linear-gradient(var(--tile) 2px, transparent 2px) 0 0/34px 34px,
+  linear-gradient(90deg, var(--tile) 2px, transparent 2px) 0 0/34px 34px; opacity:.8}
+.note-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:4px}
+.pill{background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:4px 10px; font-size:14px; font-weight:600}
+
+/* stage */
+.kit-top{position:sticky; top:calc(55px + env(safe-area-inset-top,0px)); z-index:10}
+.stage{position:relative; height:250px; background:var(--wall); overflow:hidden; flex:none}
+.window{position:absolute; top:16px; right:18px; width:74px; height:58px; border-radius:10px; border:5px solid var(--surface);
+  background:linear-gradient(#BFE6FF,#E8F6FF); box-shadow:inset 0 0 0 2px var(--tile)}
+.window::after{content:""; position:absolute; left:50%; top:0; bottom:0; width:4px; margin-left:-2px; background:var(--surface)}
+.shelf{position:absolute; top:88px; right:12px; width:96px; height:6px; border-radius:3px; background:var(--plum)}
+.shelf span{position:absolute; bottom:6px; font-size:18px}
+.belt{position:absolute; left:0; right:0; bottom:0; height:34px; background:
+  repeating-linear-gradient(90deg, var(--belt) 0 18px, var(--belt-2) 18px 36px); border-top:6px solid #2A1E38}
+.belt.moving{animation:belt .5s linear}
+@keyframes belt{to{background-position:-72px 0}}
+.cake-wrap{position:absolute; left:0; right:0; bottom:8px; height:236px; display:flex; justify-content:center}
+.cake-wrap.slide{animation:slidein .5s cubic-bezier(.3,1.2,.5,1)}
+@keyframes slidein{from{transform:translateX(-60px)}to{transform:none}}
+.cake-svg{width:100%; max-width:330px; height:100%; overflow:visible}
+.cake-svg .tp{cursor:pointer}
+
+/* halmeoni */
+.halmeoni{position:absolute; left:10px; top:10px; right:108px; display:flex; gap:8px; align-items:flex-start; z-index:3}
+.halmeoni .face{flex:none; width:40px; height:40px; border-radius:12px; background:var(--butter); display:grid; place-items:center; font-size:24px; box-shadow:0 3px 0 #D9A92E}
+.bubble{background:var(--surface); border:2px solid var(--ink); border-radius:12px; padding:6px 10px; font-size:14px; line-height:1.3; font-weight:600;
+  position:relative; animation:bub .3s ease-out}
+.bubble::before{content:""; position:absolute; left:-8px; top:12px; border:6px solid transparent; border-right-color:var(--ink)}
+@keyframes bub{from{transform:scale(.9); opacity:0}to{transform:none; opacity:1}}
+.combo{position:absolute; left:50%; top:42%; transform:translateX(-50%); font-family:var(--pixel); font-size:20px; color:var(--pink);
+  text-shadow:2px 2px 0 var(--ink); z-index:4; animation:combo .9s ease-out forwards; pointer-events:none; white-space:nowrap}
+@keyframes combo{0%{transform:translate(-50%,10px) scale(.6); opacity:0}30%{transform:translate(-50%,0) scale(1.15); opacity:1}100%{transform:translate(-50%,-30px) scale(1); opacity:0}}
+
+/* stations bar */
+.stations{display:flex; gap:4px; padding:8px 10px; overflow-x:auto; background:var(--surface); border-bottom:1px solid var(--line)}
+.st{flex:1 0 auto; min-width:40px; text-align:center; font-size:11px; font-weight:700; color:var(--muted); padding:4px 2px; border-radius:10px}
+.st b{display:block; font-size:18px; line-height:1.2; filter:grayscale(1); opacity:.55}
+.st.done b{filter:none; opacity:.9}
+.st.on{background:var(--plum); color:var(--on-primary)}
+.st.on b{filter:none; opacity:1}
+
+/* oven + box overlays */
+.overlay{position:absolute; inset:0; display:grid; place-items:center; z-index:5}
+.oven{width:190px; height:150px; border-radius:18px; background:#6E7686; box-shadow:0 8px 0 #4C5261; position:relative; animation:ovenin .3s ease-out}
+.oven .door{position:absolute; left:20px; right:20px; top:34px; bottom:18px; border-radius:10px; background:#2D2233; overflow:hidden}
+.oven .door::after{content:""; position:absolute; inset:0; background:radial-gradient(circle at 50% 80%, #FFB347, #FF6B2C 45%, transparent 75%); animation:glow .5s ease-in-out infinite alternate}
+.oven .knobs{position:absolute; top:10px; left:22px; display:flex; gap:10px}
+.oven .knobs i{width:14px; height:14px; border-radius:50%; background:#D9DDE6; display:block}
+.oven .timer{position:absolute; top:8px; right:20px; font-family:var(--pixel); font-size:12px; color:#FFD45E}
+@keyframes glow{from{opacity:.55}to{opacity:1}}
+@keyframes ovenin{from{transform:scale(.7); opacity:0}to{transform:none; opacity:1}}
+.box-front{position:absolute; bottom:14px; left:50%; width:240px; margin-left:-120px; height:170px; background:#FFF4E8; border:4px solid var(--pink);
+  border-radius:10px; animation:boxup .5s cubic-bezier(.3,1.3,.5,1) both}
+.box-lid{position:absolute; bottom:180px; left:50%; width:260px; margin-left:-130px; height:28px; background:var(--pink); border-radius:8px; animation:lid .45s .45s cubic-bezier(.3,1.5,.5,1) both}
+.box-bow{position:absolute; bottom:196px; left:50%; transform:translateX(-50%); font-size:40px; animation:bow .4s .85s ease-out both}
+.box-front::after{content:""; position:absolute; left:50%; top:0; bottom:0; width:18px; margin-left:-9px; background:var(--pink)}
+@keyframes boxup{from{transform:translateY(200px)}to{transform:none}}
+@keyframes lid{from{transform:translateY(-200px)}to{transform:none}}
+@keyframes bow{from{transform:translateX(-50%) scale(0) rotate(-40deg)}to{transform:translateX(-50%) scale(1)}}
+
+/* svg animations */
+.drop{animation:drop .5s cubic-bezier(.3,1.6,.5,1) both; transform-box:fill-box; transform-origin:center bottom}
+@keyframes drop{from{transform:translateY(-110px); opacity:0}50%{opacity:1}to{transform:none}}
+.tierdrop{animation:tierdrop .6s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes tierdrop{from{transform:translateY(-170px)}to{transform:none}}
+.pour{animation:pour .7s ease-out both; transform-box:fill-box; transform-origin:center bottom}
+@keyframes pour{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.rise{animation:rise .7s cubic-bezier(.3,1.5,.5,1) both; transform-box:fill-box; transform-origin:center bottom}
+@keyframes rise{from{transform:scaleY(.55)}to{transform:scaleY(1)}}
+.sweep{animation:sweep .65s ease-out both}
+@keyframes sweep{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.grow{animation:grow .35s cubic-bezier(.3,1.6,.5,1) both; transform-box:fill-box; transform-origin:center bottom}
+@keyframes grow{from{transform:scaleX(.8)}to{transform:none}}
+
+/* panel */
+.panel{flex:1; padding:14px 14px 110px; background:var(--surface-2)}
+.panel h2{margin-bottom:2px}
+.grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px}
+.grid.two{grid-template-columns:repeat(2,1fr)}
+.tile{position:relative; border:2px solid var(--line); background:var(--surface); border-radius:16px; padding:10px 6px 8px; min-height:92px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-align:center; font-weight:700; font-size:14px; line-height:1.15}
+.tile .sw{width:34px; height:34px; border-radius:50%; border:2px solid rgba(0,0,0,.12)}
+.tile .em{font-size:30px; line-height:1}
+.tile .ko{font-size:12px; color:var(--muted); font-weight:600}
+.tile .pr{font-size:12px; color:var(--muted); font-weight:600}
+.tile[aria-pressed="true"]{border-color:var(--plum); box-shadow:0 0 0 3px color-mix(in srgb, var(--plum) 25%, transparent)}
+.tile.locked{background:var(--surface-2); color:var(--lock)}
+.tile.locked .sw,.tile.locked .em{filter:grayscale(1); opacity:.45}
+.tile .lk{position:absolute; top:6px; right:8px; font-size:13px}
+.tile .why{font-size:12px; text-decoration:underline; color:var(--muted); font-weight:700}
+.tile .cnt{position:absolute; top:-7px; right:-7px; background:var(--pink); color:#fff; min-width:22px; height:22px; border-radius:11px; font-size:13px; display:grid; place-items:center; padding:0 5px}
+.bigaction{margin-top:16px}
+.textin{width:100%; border:2px solid var(--line); background:var(--surface); border-radius:14px; padding:10px 12px; font-size:17px; font-weight:600}
+.textin:focus{border-color:var(--plum); outline:none}
+
+/* bottom bar */
+.bar{position:fixed; left:0; right:0; bottom:0; z-index:15; background:var(--surface); border-top:1px solid var(--line);
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px))}
+.bar-in{max-width:432px; margin:0 auto; display:flex; gap:10px; align-items:center}
+.price{flex:1; line-height:1.1}
+.price b{display:block; font-size:22px; font-weight:800}
+.price span{font-size:13px; color:var(--muted); font-weight:600}
+.bar .btn{width:auto; min-width:110px}
+
+/* cards */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:14px}
+.bk{display:grid; grid-template-columns:62px 1fr; gap:12px; align-items:start}
+.bk .pic{width:62px; height:62px; border-radius:16px; display:grid; place-items:center; font-size:30px}
+.bk h3{margin:0 0 2px}
+.badge{display:inline-block; font-size:12px; font-weight:800; padding:2px 8px; border-radius:999px; margin-right:4px}
+.badge.ok{background:color-mix(in srgb, var(--mint) 22%, transparent); color:#167A57}
+.badge.self{background:color-mix(in srgb, var(--butter) 35%, transparent); color:#8A6200}
+.badge.plain{background:var(--surface-2); color:var(--muted); border:1px solid var(--line)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .badge.ok{color:#7FE7C0} :root:not([data-theme="light"]) .badge.self{color:#FFD45E} }
+.meta{font-size:14px; color:var(--muted); font-weight:600}
+.notice{background:color-mix(in srgb, var(--butter) 25%, transparent); border-radius:12px; padding:8px 10px; font-size:14px; font-weight:600; margin-top:8px}
+
+/* modal + toast */
+.modal-bg{position:fixed; inset:0; background:rgba(20,10,30,.5); z-index:40; display:grid; place-items:end center; padding:16px}
+.modal{background:var(--surface); border-radius:22px; padding:18px; width:100%; max-width:430px; animation:up .25s ease-out;
+  margin-bottom:env(safe-area-inset-bottom,0px)}
+@keyframes up{from{transform:translateY(40px); opacity:0}to{transform:none; opacity:1}}
+.toast{position:fixed; left:50%; bottom:calc(96px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); background:var(--ink); color:var(--bg);
+  padding:10px 14px; border-radius:14px; font-weight:700; font-size:15px; z-index:50; max-width:90vw; animation:up .2s ease-out}
+
+/* result */
+.result-stage{position:relative; height:280px; background:var(--wall); overflow:hidden}
+.spin{animation:spin 1.4s cubic-bezier(.4,.1,.3,1) both; transform-origin:center}
+@keyframes spin{from{transform:perspective(600px) rotateY(0)}to{transform:perspective(600px) rotateY(360deg)}}
+.confetti i{position:absolute; top:-12px; width:9px; height:14px; border-radius:2px; animation:fall 1.8s ease-in forwards}
+@keyframes fall{to{transform:translateY(320px) rotate(540deg); opacity:.2}}
+.stars{display:flex; gap:10px; justify-content:center; margin:10px 0 4px}
+.star{text-align:center; font-size:13px; font-weight:700; color:var(--muted); width:92px}
+.star b{display:block; font-size:34px; line-height:1.1; animation:starpop .4s cubic-bezier(.3,1.8,.5,1) both}
+.star.off b{filter:grayscale(1); opacity:.35}
+@keyframes starpop{from{transform:scale(0)}to{transform:none}}
+.stats{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:12px 0}
+.stat{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:8px 4px; text-align:center}
+.stat b{display:block; font-size:18px}
+.stat span{font-size:12px; color:var(--muted); font-weight:600}
+.rows{display:grid; gap:4px; font-size:15px}
+.rows div{display:flex; justify-content:space-between; gap:10px}
+.rows .tot{font-weight:800; font-size:19px; border-top:1px dashed var(--line); padding-top:6px; margin-top:4px}
+.rows .disc{color:var(--mint); font-weight:700}
+
+/* form */
+label.f{display:grid; gap:4px; font-weight:700; font-size:15px}
+.seg{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.err{color:var(--danger); font-size:14px; font-weight:700}
+
+/* tracking */
+.steps{list-style:none; padding:0; margin:12px 0; display:grid; gap:0}
+.steps li{display:grid; grid-template-columns:34px 1fr; gap:10px; align-items:center; padding:6px 0; color:var(--muted); font-weight:700}
+.steps li .dot{width:34px; height:34px; border-radius:50%; display:grid; place-items:center; background:var(--surface); border:2px solid var(--line); font-size:16px}
+.steps li.done{color:var(--ink)}
+.steps li.done .dot{background:var(--mint); border-color:var(--mint)}
+.steps li.now{color:var(--ink)}
+.steps li.now .dot{background:var(--butter); border-color:var(--butter); animation:bounce .8s ease-in-out infinite alternate}
+@keyframes bounce{to{transform:translateY(-4px)}}
+.vs{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.vs figure{margin:0; background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:8px; text-align:center}
+.vs figcaption{font-size:13px; font-weight:700; color:var(--muted)}
+.photo{background:#EFE6DA; border-radius:10px; filter:saturate(1.15) contrast(1.05)}
+.photo .cake-svg{filter:drop-shadow(0 6px 6px rgba(0,0,0,.25))}
+.pixel{image-rendering:pixelated; background:var(--wall); border-radius:10px}
+
+/* dashboard */
+.ord{display:grid; gap:8px}
+.ord-top{display:flex; justify-content:space-between; align-items:baseline; gap:8px}
+.ord-top b{font-size:18px}
+.status{font-size:12px; font-weight:800; padding:3px 9px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line)}
+.status.received{background:var(--butter); color:#5A4200; border-color:transparent}
+.status.declined{background:#F7D3DA; color:#8E1F35; border-color:transparent}
+.status.delivered,.status.pickedup{background:var(--mint); color:#0D4E37; border-color:transparent}
+.ord-body{display:grid; grid-template-columns:110px 1fr; gap:10px; align-items:center}
+.mini{height:96px; background:var(--wall); border-radius:12px; overflow:hidden}
+.mini .cake-svg{height:100%}
+.ing{font-size:13px; color:var(--muted); font-weight:600}
+.act{display:flex; gap:8px; flex-wrap:wrap}
+.suggest{display:grid; grid-template-columns:110px 1fr; gap:12px; align-items:center}
+
+
+/* ===== landing ===== */
+.lp{padding-bottom:30px}
+.lp-hero{position:relative; margin:14px 14px 0; border-radius:28px; overflow:hidden; background:var(--wall); aspect-ratio:360/300}
+.lp-hero > svg{display:block; width:100%; height:100%}
+.lp-hud{position:absolute; top:14px; left:16px; right:16px; transition:opacity .25s; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none}
+.lp-hud .stage-l{font-family:var(--pixel); font-size:11px; color:var(--muted); line-height:1.3}
+.lp-hud .stage-l b{display:block; font-family:var(--display); font-size:15px; color:var(--ink); font-weight:700; letter-spacing:-.01em; transition:opacity .2s}
+.lp-hud .score{font-family:var(--pixel); font-size:13px; background:var(--surface); color:var(--ink); border-radius:999px; padding:3px 10px; box-shadow:0 2px 0 var(--line)}
+.lp-tag{position:absolute; left:16px; top:14px; display:flex; gap:10px; align-items:center; background:var(--surface); border-radius:16px; padding:8px 12px 8px 8px;
+  box-shadow:0 6px 18px rgba(58,34,30,.14); opacity:0; transform:translateY(12px); transition:opacity .35s, transform .45s cubic-bezier(.3,1.4,.5,1)}
+.lp-tag.on{opacity:1; transform:none}
+.lp-hero.tagging .lp-hud{opacity:0}
+.lp-tag .dot{width:34px; height:34px; border-radius:10px; background:var(--wall); display:grid; place-items:center}
+.lp-tag b{display:block; font-size:14px; line-height:1.15}
+.lp-tag span{font-size:12.5px; color:var(--muted); font-weight:600}
+.lp-intro{padding:22px 18px 6px}
+.lp-h1{font-size:clamp(32px,9vw,40px); line-height:1.02; letter-spacing:-.035em; font-weight:800; margin:0 0 12px; font-variation-settings:"opsz" 96}
+.lp-sub{font-size:17px; line-height:1.5; color:var(--muted); margin:0 0 20px; max-width:34ch}
+.lp-cta{display:grid; gap:12px}
+.lp-fine{font-size:14px; color:var(--muted); margin:12px 0 0; font-weight:600}
+.lp-sec{padding:30px 18px 4px}
+.lp-sec h2{font-size:24px; letter-spacing:-.025em; margin:0 0 6px}
+.lp-sec > p{color:var(--muted); margin:0 0 14px; max-width:36ch}
+.lp-steps{list-style:none; margin:14px 0 0; padding:0; display:grid; gap:10px; counter-reset:s}
+.lp-steps li{display:grid; grid-template-columns:64px 1fr; gap:14px; align-items:center; background:var(--surface); border-radius:20px; padding:12px 14px 12px 12px}
+.lp-steps .ic{width:64px; height:64px; border-radius:16px; background:var(--wall); display:grid; place-items:center}
+.lp-steps .ic svg{width:48px; height:48px}
+.lp-steps b{display:block; font-size:17px; letter-spacing:-.01em}
+.lp-steps b::before{counter-increment:s; content:counter(s) ". "; color:var(--pink)}
+.lp-steps span{font-size:14.5px; color:var(--muted); line-height:1.4; display:block}
+.diet{display:flex; flex-wrap:wrap; gap:8px}
+.diet span{background:var(--surface); border-radius:999px; padding:6px 13px; font-weight:600; font-size:15px; display:inline-flex; gap:6px; align-items:center}
+.diet span i{width:8px; height:8px; border-radius:50%; background:var(--mint); display:inline-block}
+.lp-lock{display:flex; gap:10px; align-items:center; margin-top:14px; background:var(--surface); border-radius:16px; padding:10px 12px; font-size:14.5px; line-height:1.35}
+.lp-lock .lk{flex:none; width:36px; height:36px; border-radius:10px; background:var(--surface-2); display:grid; place-items:center; color:var(--lock)}
+.shops{display:grid; gap:10px; margin-top:12px}
+.shop{position:relative; background:var(--surface); border-radius:18px; padding:26px 14px 12px; overflow:hidden}
+.shop::before{content:""; position:absolute; left:0; right:0; top:0; height:12px; background:repeating-linear-gradient(90deg, var(--aw) 0 16px, var(--surface) 16px 32px);
+  -webkit-mask:radial-gradient(circle at 8px 12px, #000 8px, transparent 8.5px) 0 0/16px 12px repeat-x, linear-gradient(#000,#000) 0 0/100% 6px no-repeat}
+.shop b{font-size:16.5px; letter-spacing:-.01em}
+.shop .meta{margin-top:1px}
+.shop .badge{margin-top:6px}
+.lp-final{margin:32px 14px 0; background:var(--plum); color:var(--on-primary); border-radius:28px; padding:26px 20px 22px; position:relative; overflow:hidden}
+.lp-final .px{font-family:var(--pixel); font-size:12px; opacity:.75}
+.lp-final h2{font-size:26px; letter-spacing:-.03em; margin:6px 0 16px; line-height:1.1; max-width:16ch}
+.lp-final .btn{background:var(--pink); color:#fff; box-shadow:0 5px 0 var(--pink-dark)}
+.lp-final .deco{position:absolute; right:-18px; top:-10px; width:120px; opacity:.9}
+.lp-foot{padding:22px 18px 0; font-size:13px; color:var(--muted)}
+
+/* hero scene animation */
+#heroSvg .h-pan,#heroSvg .h-batter,#heroSvg .h-stream,#heroSvg .h-nozzle,#heroSvg .h-cake,#heroSvg .h-plate,#heroSvg .h-frost,#heroSvg .h-rose,#heroSvg .h-drop,#heroSvg .h-candle,#heroSvg .h-score{opacity:0}
+#heroSvg .h-oven{transform:translateY(-300px)}
+#heroSvg .h-all{transition:opacity .4s}
+#heroSvg.s-out .h-all{opacity:0}
+#heroSvg.s-pan .h-pan{opacity:1; animation:hPanIn .9s cubic-bezier(.2,.9,.3,1.15) both}
+#heroSvg.s-pan .h-stripes{animation:hBelt .9s cubic-bezier(.2,.9,.3,1) both}
+#heroSvg.s-pour .h-nozzle{opacity:1; animation:hNozzle 1.4s ease both}
+#heroSvg.s-pour .h-stream{animation:hStream 1.25s .15s ease both; transform-box:fill-box; transform-origin:center top}
+#heroSvg.s-pour .h-batter{opacity:1; animation:hFill .9s .35s cubic-bezier(.3,1.3,.5,1) both; transform-box:fill-box; transform-origin:center}
+#heroSvg.s-oven .h-oven{transform:none; animation:hOvenDown .6s cubic-bezier(.3,1.35,.5,1) both}
+#heroSvg.s-baked .h-oven{transform:translateY(-300px); animation:hOvenUp .5s ease-in both}
+#heroSvg.s-baked .h-pan,#heroSvg.s-baked .h-batter{opacity:0; animation:none}
+#heroSvg.s-baked .h-plate{opacity:1}
+#heroSvg.s-baked .h-cake{opacity:1; animation:hRise .75s .2s cubic-bezier(.3,1.55,.5,1) both; transform-box:fill-box; transform-origin:center bottom}
+#heroSvg.s-cream .h-frost{opacity:1; animation:hSweep .75s ease-out both}
+#heroSvg.s-rose .h-rose{opacity:1; animation:hPop .4s cubic-bezier(.3,1.9,.5,1) both; transform-box:fill-box; transform-origin:center}
+#heroSvg.s-berry .h-drop{opacity:1; animation:hDrop .6s cubic-bezier(.3,1.6,.5,1) both; transform-box:fill-box; transform-origin:center bottom}
+#heroSvg.s-candle .h-candle{opacity:1; animation:hDrop .6s cubic-bezier(.3,1.6,.5,1) both; transform-box:fill-box; transform-origin:center bottom}
+#heroSvg.s-score .h-score{animation:hScore 1.8s ease-out both}
+#heroSvg .h-flame{animation:hFlicker .16s ease-in-out infinite alternate; transform-box:fill-box; transform-origin:center bottom}
+#heroSvg .h-glow{animation:hGlow .4s ease-in-out infinite alternate}
+@keyframes hPanIn{from{transform:translateX(-280px)}to{transform:none}}
+@keyframes hBelt{from{transform:translateX(-60px)}to{transform:none}}
+@keyframes hNozzle{0%{transform:translateY(-80px); opacity:0}18%{transform:none; opacity:1}82%{transform:none; opacity:1}100%{transform:translateY(-80px); opacity:0}}
+@keyframes hStream{0%{transform:scaleY(0); opacity:1}25%{transform:scaleY(1); opacity:1}75%{transform:scaleY(1); opacity:1}100%{transform:scaleY(1); opacity:0}}
+@keyframes hFill{from{transform:scale(.15); opacity:0}to{transform:none; opacity:1}}
+@keyframes hOvenDown{from{transform:translateY(-300px)}to{transform:none}}
+@keyframes hOvenUp{from{transform:none}to{transform:translateY(-300px)}}
+@keyframes hRise{from{transform:scaleY(.35)}to{transform:none}}
+@keyframes hSweep{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes hPop{from{transform:scale(0)}to{transform:none}}
+@keyframes hDrop{from{transform:translateY(-150px); opacity:0}35%{opacity:1}to{transform:none; opacity:1}}
+@keyframes hScore{0%{opacity:0; transform:translateY(10px)}20%{opacity:1; transform:none}75%{opacity:1; transform:translateY(-6px)}100%{opacity:0; transform:translateY(-14px)}}
+@keyframes hFlicker{from{transform:scale(1,1) rotate(-3deg)}to{transform:scale(.9,1.12) rotate(3deg)}}
+@keyframes hGlow{from{opacity:.55}to{opacity:1}}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important; transition:none !important}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+/* ================= DATA ================= */
+const SHAPES=[{id:'round',name:'Round'},{id:'square',name:'Square'},{id:'heart',name:'Heart'}];
+const SIZES=[{id:'s',name:'Small',people:'4–6 people',w:150,price:28000,serv:5},{id:'m',name:'Medium',people:'8–10 people',w:186,price:39000,serv:9},{id:'l',name:'Large',people:'12+ people',w:218,price:52000,serv:13}];
+const BATTERS=[
+ {id:'vanilla',name:'Vanilla',ko:'바닐라',color:'#F2D69B',price:0,kcal:260,sugar:22,protein:5,allergens:['egg','milk','wheat'],tags:['classic','creamy']},
+ {id:'chocolate',name:'Chocolate',ko:'초코',color:'#6A3A28',price:3000,kcal:290,sugar:24,protein:5,allergens:['egg','milk','wheat','soy'],tags:['chocolatey'],dark:true},
+ {id:'matcha',name:'Matcha',ko:'말차',color:'#93B55E',price:4000,kcal:250,sugar:18,protein:5,allergens:['egg','milk','wheat'],tags:['fresh','korean']},
+ {id:'redvelvet',name:'Red velvet',ko:'레드벨벳',color:'#B0303B',price:4000,kcal:280,sugar:24,protein:5,allergens:['egg','milk','wheat'],tags:['classic'],dark:true},
+ {id:'goguma',name:'Sweet potato',ko:'고구마',color:'#E3A456',price:4000,kcal:240,sugar:17,protein:4,allergens:['egg','milk','wheat'],tags:['korean','nutty','creamy']},
+ {id:'rice',name:'Rice flour',ko:'쌀 (no wheat)',color:'#F3ECDC',price:5000,kcal:230,sugar:16,protein:4,allergens:['egg','milk'],tags:['light','korean']},
+ {id:'oat',name:'Vegan oat',ko:'비건 오트',color:'#D6C095',price:5000,kcal:220,sugar:14,protein:6,allergens:['wheat'],tags:['light','fresh'],only:['s1','s2']}
+];
+const FROSTINGS=[
+ {id:'whip',name:'Whipped cream',ko:'생크림',color:'#FFFBF4',price:0,kcal:120,sugar:8,protein:1,allergens:['milk'],tags:['creamy','light','classic']},
+ {id:'cheese',name:'Cream cheese',ko:'크림치즈',color:'#FAEFD6',price:3000,kcal:150,sugar:10,protein:3,allergens:['milk'],tags:['creamy','classic']},
+ {id:'ganache',name:'Choco ganache',ko:'가나슈',color:'#4A2A1E',price:3000,kcal:170,sugar:14,protein:2,allergens:['milk','soy'],tags:['chocolatey']},
+ {id:'berry',name:'Strawberry cream',ko:'딸기 크림',color:'#F6B3C6',price:3000,kcal:130,sugar:11,protein:1,allergens:['milk'],tags:['fruity','creamy']},
+ {id:'yogurt',name:'Greek yogurt',ko:'요거트',color:'#F7F4EC',price:4000,kcal:90,sugar:5,protein:7,allergens:['milk'],tags:['light','fresh']},
+ {id:'coconut',name:'Coconut cream',ko:'코코넛 (vegan)',color:'#EFEBDD',price:4000,kcal:140,sugar:6,protein:1,allergens:[],tags:['light','fresh'],only:['s1','s2']},
+ {id:'rum',name:'Rum buttercream',ko:'럼 버터',color:'#EFD6A0',price:4000,kcal:190,sugar:15,protein:1,allergens:['milk'],halal:false,halalNote:'Contains rum (alcohol), so it is not halal.',tags:['creamy'],only:['s3']}
+];
+const TOPPINGS=[
+ {id:'straw',e:'🍓',name:'Strawberry',price:1500,kcal:4,sugar:1,protein:0,allergens:[],tags:['fruity']},
+ {id:'blue',e:'🫐',name:'Blueberries',price:1500,kcal:3,sugar:1,protein:0,allergens:[],tags:['fruity','fresh']},
+ {id:'cherry',e:'🍒',name:'Cherry',price:1500,kcal:5,sugar:1,protein:0,allergens:[],tags:['fruity']},
+ {id:'kiwi',e:'🥝',name:'Kiwi',price:1500,kcal:4,sugar:1,protein:0,allergens:[],tags:['fresh','fruity']},
+ {id:'peach',e:'🍑',name:'Peach',price:1500,kcal:5,sugar:1,protein:0,allergens:['peach'],tags:['fruity']},
+ {id:'yuja',e:'🍋',name:'Yuja peel',price:1500,kcal:3,sugar:1,protein:0,allergens:[],tags:['fresh','korean']},
+ {id:'choc',e:'🍫',name:'Chocolate',price:1000,kcal:25,sugar:3,protein:0,allergens:['milk','soy'],tags:['chocolatey']},
+ {id:'cookie',e:'🍪',name:'Cookie',price:1000,kcal:30,sugar:3,protein:0,allergens:['wheat','egg','milk'],tags:['classic']},
+ {id:'peanut',e:'🥜',name:'Peanuts',price:1000,kcal:20,sugar:0,protein:1,allergens:['peanut'],tags:['nutty']},
+ {id:'mint',e:'🌿',name:'Mint leaf',price:500,kcal:0,sugar:0,protein:0,allergens:[],tags:['fresh']},
+ {id:'star',e:'⭐',name:'Sugar star',price:800,kcal:10,sugar:3,protein:0,allergens:[],tags:[]},
+ {id:'gummy',e:'🍬',name:'Gummy candy',price:800,kcal:15,sugar:4,protein:0,allergens:[],gelatin:true,halal:false,halalNote:'Made with pork gelatin, so it is not halal.',tags:[],only:['s3']},
+ {id:'candle',e:'🕯️',name:'Candle',price:500,kcal:0,sugar:0,protein:0,allergens:[],tags:[]}
+];
+const ALL={}; [...BATTERS,...FROSTINGS,...TOPPINGS].forEach(x=>ALL[x.id]=x);
+const BAKERIES=[
+ {id:'s1',name:'Seoul Sugar Studio',area:'Mapo-gu',trust:'verified',halal:true,maxLayers:3,delivery:true,pickup:true,lead:'Tomorrow',mult:1,pic:'🧁',bg:'#FFE1EC'},
+ {id:'s2',name:'Itaewon Crumb House',area:'Yongsan-gu',trust:'self',halal:true,maxLayers:2,delivery:false,pickup:true,lead:'In 2 days',mult:.95,pic:'🥐',bg:'#FFF1C9'},
+ {id:'s3',name:'Bora Bakehouse',area:'Seongsu-dong',trust:'none',halal:false,maxLayers:3,delivery:true,pickup:true,lead:'Tomorrow',mult:1.05,pic:'🍰',bg:'#E2F5EC'}
+];
+const OPTIONS=[
+ {id:'halal',label:'Halal'},{id:'no_milk',label:'No milk'},{id:'no_egg',label:'No egg'},{id:'no_nuts',label:'No nuts'},
+ {id:'no_wheat',label:'No wheat'},{id:'low_sugar',label:'Low sugar'},{id:'vegan',label:'Vegan'}
+];
+const PAIRS=[
+ ['straw','cheese',2,'Strawberry + cream cheese. A classic combo!'],
+ ['chocolate','cherry',2,'Chocolate and cherry, like a Black Forest cake!'],
+ ['ganache','straw',2,'Chocolate-dipped strawberry vibes. Lovely.'],
+ ['matcha','whip',2,'Matcha with light cream, very Seoul café.'],
+ ['goguma','whip',2,'Sweet potato and cream, just like 고구마 케이크.'],
+ ['redvelvet','cheese',2,'Red velvet belongs with cream cheese.'],
+ ['yuja','yogurt',2,'Yuja and yogurt: fresh and not too sweet.'],
+ ['chocolate','peanut',1,'Chocolate and peanut. Protein bonus!'],
+ ['matcha','straw',1,'Matcha and strawberry look beautiful together.'],
+ ['yuja','whip',-1,'Yuja can curdle milk cream, dear. Try yogurt or coconut cream.'],
+ ['kiwi','whip',-1,'Kiwi makes milk cream bitter over time. Coconut cream is safer.']
+];
+const STATION_INFO={
+ pan:{icon:'🍳',label:'Pan',title:'Pick a pan',tip:'Every good cake starts with a good pan, dear.'},
+ size:{icon:'👥',label:'Size',title:'How many people?',tip:"Don't make it too small. Someone always wants seconds!"},
+ batter:{icon:'🥣',label:'Batter',title:'Pour the batter',tip:'Pick your sponge. Matcha is popular this season.'},
+ oven:{icon:'🔥',label:'Oven',title:'Bake it',tip:"Into the oven! Don't open the door."},
+ frosting:{icon:'🍦',label:'Cream',title:'Spread the cream',tip:'Now the cream. Nice and even.'},
+ toppings:{icon:'🍓',label:'Toppings',title:'Add toppings',tip:'Tap to add toppings. Tap one on the cake to take it off.'},
+ lettering:{icon:'✍️',label:'Letters',title:'Write a message',tip:'Write something sweet. Short is best.'},
+ box:{icon:'🎁',label:'Box',title:'Box it up',tip:'All done! Let me box it for you.'}
+};
+const PRESETS=[
+ {name:'Strawberry Cloud',desc:'Soft vanilla sponge, fresh cream and a crown of strawberries.',batter:'vanilla',frosting:'whip',toppings:['straw','straw','straw','straw','mint'],tags:['fruity','light','classic','creamy'],sweet:2},
+ {name:'Seoul Matcha Garden',desc:'Earthy matcha with light cream and strawberries, like a Seongsu café.',batter:'matcha',frosting:'whip',toppings:['straw','straw','mint','star'],tags:['fresh','korean','light'],sweet:1},
+ {name:'Midnight Chocolate',desc:'Rich chocolate with ganache and cherries, Black Forest style.',batter:'chocolate',frosting:'ganache',toppings:['cherry','cherry','cherry','choc'],tags:['chocolatey'],sweet:3},
+ {name:'Goguma Hug',desc:'Cozy Korean sweet potato cake with cream and roasted peanuts.',batter:'goguma',frosting:'whip',toppings:['peanut','peanut','star'],tags:['korean','nutty','creamy'],sweet:2},
+ {name:'Yuja Sunshine',desc:'Rice sponge, tangy yogurt cream and bright yuja peel.',batter:'rice',frosting:'yogurt',toppings:['yuja','yuja','mint','blue'],tags:['fresh','light','korean','fruity'],sweet:1},
+ {name:'Velvet Crush',desc:'Red velvet and cream cheese with berries on top.',batter:'redvelvet',frosting:'cheese',toppings:['straw','blue','star'],tags:['classic','creamy'],sweet:3},
+ {name:'Berry Garden (vegan)',desc:'Oat sponge, coconut cream and a pile of fresh fruit.',batter:'oat',frosting:'coconut',toppings:['blue','straw','kiwi','mint'],tags:['fruity','fresh','light'],sweet:1}
+];
+const OCCASIONS=['Birthday','Anniversary','Just for me','Office party'];
+const CRAVINGS=[['fruity','Fruity'],['chocolatey','Chocolatey'],['creamy','Creamy'],['nutty','Nutty'],['fresh','Fresh & light'],['korean','Korean taste']];
+const SWEET=[[1,'Light'],[2,'Medium'],[3,'Very sweet']];
+const GUEST_DISCOUNT=.10;
+
+/* ================= STATE ================= */
+const newLayer=()=>({batter:null,baked:false,frosting:null,toppings:[]});
+const freshCake=()=>({shape:null,size:null,layers:[newLayer()],lettering:''});
+const state={
+  view:'landing', opts:new Set(), bakery:null, cake:freshCake(),
+  step:{layer:0,i:0,phase:'build'}, anim:null, tip:null, busy:false, sound:false,
+  ai:{occasion:null,cravings:new Set(),sweet:null,text:'',loading:false,results:null,note:''},
+  preset:null, orderId:null, order:null, orders:[], form:{mode:'pickup'}, formErr:'', letterShown:null
+};
+let unsub=null;
+
+/* ================= HELPERS ================= */
+const app=document.getElementById('app');
+const won=n=>'₩'+(Math.round(n/100)*100).toLocaleString('en-US');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const bakery=()=>BAKERIES.find(b=>b.id===state.bakery);
+function lockReason(ing, opts=state.opts){
+  if(!ing) return null;
+  const a=ing.allergens||[];
+  if(opts.has('halal') && ing.halal===false) return ing.halalNote||'Not halal.';
+  if(opts.has('vegan') && ing.gelatin) return 'Contains animal gelatin, so it is not vegan.';
+  if((opts.has('no_milk')||opts.has('vegan')) && a.includes('milk')) return 'Contains milk.';
+  if((opts.has('no_egg')||opts.has('vegan')) && a.includes('egg')) return 'Contains egg.';
+  if(opts.has('no_nuts') && (a.includes('peanut')||a.includes('tree_nut'))) return 'Contains peanuts.';
+  if(opts.has('no_wheat') && a.includes('wheat')) return 'Contains wheat.';
+  return null;
+}
+const stocked=(ing,bid)=>!ing.only||!bid||ing.only.includes(bid);
+function bakeryFits(b, opts=state.opts){
+  if(opts.has('halal') && !b.halal) return false;
+  return BATTERS.some(x=>stocked(x,b.id)&&!lockReason(x,opts)) && FROSTINGS.some(x=>stocked(x,b.id)&&!lockReason(x,opts));
+}
+function stationsFor(layer){ return layer===0?['pan','size','batter','oven','frosting','toppings']:['batter','oven','frosting','toppings']; }
+function curStation(){ const s=state.step; return s.phase==='finish'?['lettering','box'][s.i]:stationsFor(s.layer)[s.i]; }
+function curLayer(){ return state.cake.layers[state.step.layer]; }
+function priceOf(cake, bid){
+  const b=BAKERIES.find(x=>x.id===bid)||BAKERIES[0];
+  const size=SIZES.find(s=>s.id===cake.size);
+  let p=size?size.price:0;
+  cake.layers.forEach((L,i)=>{
+    if(i>0) p+=15000;
+    if(L.batter) p+=ALL[L.batter].price;
+    if(L.frosting) p+=ALL[L.frosting].price;
+    L.toppings.forEach(t=>p+=ALL[t.id].price);
+  });
+  if(cake.lettering) p+=2000;
+  return Math.round(p*b.mult/100)*100;
+}
+function combosOf(cake){
+  const ids=new Set();
+  cake.layers.forEach(L=>{ if(L.batter) ids.add(L.batter); if(L.frosting) ids.add(L.frosting); L.toppings.forEach(t=>ids.add(t.id)); });
+  return PAIRS.filter(p=>ids.has(p[0])&&ids.has(p[1]));
+}
+function statsOf(cake){
+  const size=SIZES.find(s=>s.id===cake.size)||SIZES[1];
+  let kcal=0,sugar=0,protein=0;
+  cake.layers.forEach((L,i)=>{
+    const f=i===0?1:.55;
+    if(L.batter){kcal+=ALL[L.batter].kcal*f; sugar+=ALL[L.batter].sugar*f; protein+=ALL[L.batter].protein*f;}
+    if(L.frosting){kcal+=ALL[L.frosting].kcal*f; sugar+=ALL[L.frosting].sugar*f; protein+=ALL[L.frosting].protein*f;}
+    L.toppings.forEach(t=>{const x=ALL[t.id]; kcal+=x.kcal*3/size.serv; sugar+=x.sugar*3/size.serv; protein+=x.protein*3/size.serv;});
+  });
+  const c=combosOf(cake); const pos=c.filter(x=>x[2]>0).length, neg=c.filter(x=>x[2]<0).length;
+  const lowSugar=state.opts.has('low_sugar');
+  const goal= lowSugar ? sugar*.6<=15 : cake.layers.some(L=>L.toppings.length>0);
+  const taste= neg===0 && (pos>0 || cake.layers.every(L=>L.frosting));
+  const match=Math.max(55,Math.min(99,72+pos*9-neg*12+(goal?8:0)+(cake.lettering?3:0)));
+  kcal*=.62; sugar*=.6; protein*=.7;
+  return {kcal:Math.round(kcal),sugar:Math.round(sugar),protein:Math.round(protein),safe:true,taste,goal,match,lowSugar};
+}
+let rngSeed=1; const rnd=()=>{rngSeed=(rngSeed*9301+49297)%233280; return rngSeed/233280;};
+
+/* sound (off by default) */
+let actx=null;
+function blip(f=660,d=.08,type='square'){
+  if(!state.sound) return;
+  try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); const o=actx.createOscillator(), g=actx.createGain();
+    o.type=type; o.frequency.value=f; g.gain.value=.05; o.connect(g); g.connect(actx.destination); o.start();
+    g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime+d); o.stop(actx.currentTime+d+.02);}catch(e){}
+}
+
+/* ================= CAKE DRAWING ================= */
+let svgUid=0;
+function shade(hex,amt){ // amt -1..1
+  const n=parseInt(hex.slice(1),16); let r=n>>16,g=(n>>8)&255,b=n&255;
+  const t=amt<0?0:255, p=Math.abs(amt);
+  r=Math.round((t-r)*p+r); g=Math.round((t-g)*p+g); b=Math.round((t-b)*p+b);
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+function tierSVG(shape,cx,yb,h,w,body,top,uid,shadeOn=true){
+  const yt=yb-h, ry=Math.max(9,w*.1);
+  const sh=shadeOn?`fill="url(#sh${uid})"`:'fill="none"';
+  if(shape==='square'){
+    const L=cx-w/2, R=cx+w/2-16, d=ry*1.6;
+    const bodySvg=`<rect x="${L}" y="${yt}" width="${R-L}" height="${h}" fill="${body}"/>
+      <polygon points="${R},${yt} ${R+16},${yt-d} ${R+16},${yb-d} ${R},${yb}" fill="${shade(body,-.22)}"/>
+      <rect x="${L}" y="${yt}" width="${R-L}" height="${h}" ${sh}/>`;
+    const topSvg=c=>`<polygon points="${L},${yt} ${L+16},${yt-d} ${R+16},${yt-d} ${R},${yt}" fill="${c}"/>`;
+    return {bodySvg, topSvg, svg:bodySvg+topSvg(top), tx:cx, ty:yt-d/2, rx:(w-32)/2, ry:d/2, L, R, yt};
+  }
+  const bw= shape==='heart'? w*.9 : w;
+  const L=cx-bw/2, R=cx+bw/2, rx=bw/2;
+  const topSvg=c=>{
+    if(shape!=='heart') return `<ellipse cx="${cx}" cy="${yt}" rx="${rx}" ry="${ry}" fill="${c}"/>`;
+    const hw=w*.62, hy=ry*1.9;
+    return `<ellipse cx="${cx}" cy="${yt}" rx="${rx}" ry="${ry}" fill="${shade(c,-.06)}"/>
+      <path d="M${cx},${yt+hy*.55} C${cx-hw},${yt-hy*.1} ${cx-hw*.5},${yt-hy*1.05} ${cx},${yt-hy*.35} C${cx+hw*.5},${yt-hy*1.05} ${cx+hw},${yt-hy*.1} ${cx},${yt+hy*.55} Z" fill="${c}" stroke="${shade(c,-.12)}" stroke-width="1.5"/>`;
+  };
+  const bodySvg=`<path d="M${L},${yt} V${yb} A${rx},${ry} 0 0 0 ${R},${yb} V${yt} Z" fill="${body}"/>
+    <path d="M${L},${yt} V${yb} A${rx},${ry} 0 0 0 ${R},${yb} V${yt} Z" ${sh}/>`;
+  return {bodySvg, topSvg, svg:bodySvg+topSvg(top), tx:cx, ty:yt, rx, ry, L, R, yt};
+}
+function dripsSVG(L,R,yt,ry,color,seed){
+  const n=8, seg=(R-L)/n; let d=`M${L},${yt} L${L},${yt+ry*.5}`;
+  for(let j=0;j<n;j++){ const x0=L+j*seg, x1=x0+seg, dep=ry*.5+6+((j*7+seed*3)%4)*4;
+    d+=` Q${x0+seg*.2},${yt+dep+6} ${x0+seg/2},${yt+dep} Q${x0+seg*.8},${yt+dep-8} ${x1},${yt+ry*.5}`; }
+  d+=` L${R},${yt} Z`;
+  return `<path d="${d}" fill="${color}"/>`;
+}
+function cakeSVG(cake,o={}){
+  const uid=++svgUid, anim=o.anim||{}, size=SIZES.find(s=>s.id===cake.size)||SIZES[1];
+  const cx=160, base=o.base||222; const parts=[];
+  const plateW=(cake.shape?size.w:170)/2+30;
+  parts.push(`<ellipse cx="${cx}" cy="${base+8}" rx="${plateW+4}" ry="14" fill="var(--plate)"/><ellipse cx="${cx}" cy="${base+4}" rx="${plateW}" ry="11" fill="var(--plate-top)"/>`);
+  if(!cake.shape){
+    parts.push(`<ellipse cx="${cx}" cy="${base-30}" rx="80" ry="12" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 6" opacity=".6"/>`);
+  } else {
+    let yb=base;
+    cake.layers.forEach((L,i)=>{
+      const w=size.w*Math.pow(.72,i);
+      const cls=[]; if(anim.type==='tier'&&anim.layer===i) cls.push('tierdrop'); if(anim.type==='pan'&&i===0) cls.push('drop'); if(anim.type==='size'&&i===0) cls.push('grow');
+      let g='';
+      if(!L.baked){
+        const h=26, panBody='#8E95A5', panTop='#C9CED8';
+        const t=tierSVG(cake.shape,cx,yb,h,w,panBody,panTop,uid);
+        g+=t.svg;
+        if(L.batter){
+          const inner=tierSVG(cake.shape,cx,yb-3,h-8,w*.86,ALL[L.batter].color,shade(ALL[L.batter].color,.18),uid,false);
+          g+=`<g class="${anim.type==='pour'&&anim.layer===i?'pour':''}">${inner.svg}</g>`;
+        }
+        parts.push(`<g class="${cls.join(' ')}">${g}</g>`);
+        yb=yb-h+4;
+      } else {
+        const h=44, bat=ALL[L.batter], fr=L.frosting?ALL[L.frosting]:null;
+        const top=fr?fr.color:shade(bat.color,.2);
+        const probe=tierSVG(cake.shape,cx,yb,h,w,bat.color,top,uid);
+        let frost='';
+        if(fr){ frost=`<g class="${anim.type==='frost'&&anim.layer===i?'sweep':''}">${dripsSVG(probe.L,probe.R,probe.yt,probe.ry,fr.color,i+1)}${probe.topSvg(fr.color)}</g>`; }
+        g+=`<g class="${anim.type==='rise'&&anim.layer===i?'rise':''}">${probe.bodySvg}${probe.topSvg(shade(bat.color,.2))}</g>`+frost;
+        // toppings
+        const hasAbove=i<cake.layers.length-1;
+        L.toppings.forEach((t,k)=>{
+          let fx=t.fx, fy=t.fy;
+          if(hasAbove && Math.abs(fx)<.78){ fx=(fx<0?-1:1)*(.8+Math.abs(fy)*.1); }
+          const x=probe.tx+fx*probe.rx*.82, y=probe.ty+fy*probe.ry*.75+6;
+          const fs=Math.max(14,20*Math.pow(.85,i));
+          const isNew=anim.type==='top'&&anim.layer===i&&anim.k===k;
+          g+=`<text class="tp ${isNew?'drop':''}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${fs}" text-anchor="middle" ${o.interactive?`data-act="rmTop" data-v="${i}:${k}"`:''}>${t.e||ALL[t.id].e}</text>`;
+        });
+        parts.push(`<g class="${cls.join(' ')}">${g}</g>`);
+        yb=probe.yt;
+      }
+    });
+    // lettering on the front of the top baked tier
+    const topI=cake.layers.length-1, TL=cake.layers[topI];
+    if(cake.lettering && TL.baked){
+      const w=size.w*Math.pow(.72,topI); let y=base; for(let i=0;i<topI;i++) y-=44;
+      const bat=ALL[TL.batter]; const col=bat.dark?'#FFF1F7':'#D6336C';
+      const txt=o.letterShown!=null?cake.lettering.slice(0,o.letterShown):cake.lettering;
+      const fs=Math.max(10,Math.min(17,(w*.9)/Math.max(6,cake.lettering.length)*1.6));
+      const lx=cake.shape==='square'?160-8:160;
+      parts.push(`<text x="${lx}" y="${y-44/2+fs*.55+4}" font-size="${fs}" font-weight="800" text-anchor="middle" fill="${col}" font-family="Bricolage Grotesque, sans-serif">${esc(txt)}</text>`);
+    }
+  }
+  return `<svg class="cake-svg" viewBox="${o.crop?'40 70 240 180':'0 0 320 250'}" role="img" aria-label="${esc(o.label||'Cake preview')}" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="sh${uid}" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient></defs>
+    ${parts.join('')}</svg>`;
+}
+
+/* ================= STORE (db capability with local fallback) ================= */
+let dbApi=null, sampleApi=null;
+const local={orders:[],subs:new Set()};
+function loadLocal(){ try{ local.orders=JSON.parse(localStorage.getItem('ck_orders')||'[]'); }catch(e){ local.orders=[]; } }
+function saveLocal(){ try{ localStorage.setItem('ck_orders',JSON.stringify(local.orders)); }catch(e){} local.subs.forEach(f=>f(local.orders)); }
+loadLocal();
+window.addEventListener('storage',e=>{ if(e.key==='ck_orders'){ loadLocal(); local.subs.forEach(f=>f(local.orders)); } });
+const store={
+  async add(o){
+    if(dbApi){ try{ await dbApi.collection('orders').doc(o.id).set(o); return; }catch(e){ console.warn('db write failed, using this device only',e); dbApi=null; } }
+    local.orders.unshift(o); saveLocal();
+  },
+  async update(id,patch){
+    if(dbApi){ try{ await dbApi.doc('orders/'+id).update(patch); return; }catch(e){ console.warn(e); } }
+    const o=local.orders.find(x=>x.id===id); if(o){ Object.assign(o,patch); saveLocal(); }
+  },
+  watchAll(fn){
+    if(dbApi){ try{ return dbApi.collection('orders').orderBy('createdAt','desc').limit(40).onSnapshot(
+      s=>fn(s.docs.map(d=>Object.assign({},d.data(),{id:d.id}))), e=>{ console.warn(e); local.subs.add(fn); fn(local.orders); }); }catch(e){} }
+    local.subs.add(fn); fn(local.orders); return ()=>local.subs.delete(fn);
+  },
+  watchOne(id,fn){
+    const w=list=>fn(list.find(x=>x.id===id)||null);
+    if(dbApi){ try{ return dbApi.doc('orders/'+id).onSnapshot(s=>{ const d=s.data(); if(d) fn(Object.assign({},d,{id})); else w(local.orders); }, e=>{ local.subs.add(w); w(local.orders); }); }catch(e){} }
+    local.subs.add(w); w(local.orders); return ()=>local.subs.delete(w);
+  }
+};
+function rewatch(){
+  if(unsub){ try{unsub();}catch(e){} unsub=null; }
+  if(state.view==='dashboard') unsub=store.watchAll(list=>{ state.orders=list; if(state.view==='dashboard') render(); });
+  if(state.view==='tracking' && state.orderId) unsub=store.watchOne(state.orderId,o=>{ if(o) state.order=o; if(state.view==='tracking') render(); });
+}
+(async()=>{
+  try{
+    if(window.claude && typeof window.claude.use==='function'){
+      const [d,s]=await Promise.all([window.claude.use('db').catch(()=>null), window.claude.use('sample').catch(()=>null)]);
+      dbApi=d; sampleApi=s; rewatch();
+    }
+  }catch(e){}
+})();
+
+/* ================= VIEWS ================= */
+const LOGO=`<svg viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="16" cy="27" rx="13" ry="3" fill="var(--plate)"/><path d="M5 14v11a11 3 0 0 0 22 0V14z" fill="var(--sponge)"/><path d="M5 19a11 3 0 0 0 22 0v2a11 3 0 0 1-22 0z" fill="var(--cream)"/><path d="M5 14v3q2 3 4 0q2 4 4 0q3 4 5 0q2 3 4 0q3 4 5 0v-3z" fill="var(--cream)"/><ellipse cx="16" cy="14" rx="11" ry="3" fill="var(--cream)"/><path d="M16 4c3 0 4 3 3 5.5c-.6 1.5-2 2.5-3 2.5s-2.4-1-3-2.5C12 7 13 4 16 4z" fill="var(--pink)"/><path d="M14 4.5l2 1.5l2-1.5" stroke="var(--mint)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`;
+const ICON_SOUND_ON=`<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+const ICON_SOUND_OFF=`<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 9.5l5 5M21.5 9.5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+function header(){
+  const inBakery=state.view==='dashboard';
+  return `<header class="top">
+    <button class="brand" data-act="home" aria-label="Go to start">${LOGO}Cake Kitchen <small>working name</small></button>
+    <div class="top-actions">
+      <button class="icon-btn" data-act="sound" aria-label="${state.sound?'Mute sounds':'Turn sounds on'}" title="Sounds">${state.sound?ICON_SOUND_ON:ICON_SOUND_OFF}</button>
+      <button class="link" data-act="${inBakery?'home':'dashboard'}">${inBakery?'Customer view':'For bakeries'}</button>
+    </div></header>`;
+}
+/* ===== illustrated pieces (shared by hero, later the kitchen) ===== */
+function artStrawberry(x,y,s=1,rot=0,cls='',delay=0){
+  return `<g class="${cls}" style="animation-delay:${delay}s"><g transform="translate(${x},${y}) rotate(${rot}) scale(${s})">
+    <path d="M0,14 C-9,8 -11,-2 -8,-6 C-5,-10 5,-10 8,-6 C11,-2 9,8 0,14Z" fill="url(#gBerry)"/>
+    <path d="M-5,-4 C-4,-2 -3,-1 -2,-3 M2,-3 C3,-1 4,-2 5,-4" stroke="none"/>
+    <g fill="#FFE7A8" opacity=".9"><ellipse cx="-4" cy="0" rx=".9" ry="1.3"/><ellipse cx="3" cy="-1" rx=".9" ry="1.3"/><ellipse cx="-1" cy="4" rx=".9" ry="1.3"/><ellipse cx="4" cy="5" rx=".9" ry="1.3"/><ellipse cx="-4" cy="7" rx=".9" ry="1.3"/><ellipse cx="0" cy="9.5" rx=".8" ry="1.1"/></g>
+    <path d="M0,-7 L-7,-10 L-3,-6 L-8,-4 L-2,-5 L0,-1 L2,-5 L8,-4 L3,-6 L7,-10Z" fill="#5E9B3A"/>
+    <ellipse cx="-4" cy="-3" rx="2.2" ry="3.4" fill="#fff" opacity=".35" transform="rotate(20 -4 -3)"/></g></g>`;
+}
+function artBlueberry(x,y,s=1,cls='',delay=0){
+  return `<g class="${cls}" style="animation-delay:${delay}s"><g transform="translate(${x},${y}) scale(${s})">
+    <circle r="6" fill="url(#gBlue)"/><path d="M-2,-4.5 L0,-3 L2,-4.5 L1.2,-2.2 L-1.2,-2.2Z" fill="#2A2F5E"/><circle cx="-2.2" cy="-1.4" r="1.4" fill="#fff" opacity=".35"/></g></g>`;
+}
+function artRosette(x,y,s=1,delay=0){
+  return `<g class="h-rose" style="animation-delay:${delay}s"><g transform="translate(${x},${y}) scale(${s})">
+    <ellipse cx="0" cy="2" rx="8" ry="4" fill="#E9DCD3"/><path d="M-7,1 C-8,-5 -2,-8 0,-8 C3,-8 8,-5 7,1 C5,4 -5,4 -7,1Z" fill="var(--cream)"/>
+    <path d="M-4,-1 C-3,-5 3,-5 3,-2 C3,0 -1,1 -1,-2" stroke="#E6D6CC" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M0,-8 L1,-11" stroke="#E6D6CC" stroke-width="1.2" stroke-linecap="round"/></g></g>`;
+}
+function artDefs(){
+  return `<defs>
+    <linearGradient id="gSponge" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4D59C"/><stop offset="1" stop-color="#E0AE68"/></linearGradient>
+    <linearGradient id="gSide" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".32"/><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity=".04"/><stop offset="1" stop-color="#6B3A1E" stop-opacity=".28"/></linearGradient>
+    <linearGradient id="gCream" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F7EDE6"/></linearGradient>
+    <radialGradient id="gBerry" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#FF7A8C"/><stop offset=".55" stop-color="#E23349"/><stop offset="1" stop-color="#A9172E"/></radialGradient>
+    <radialGradient id="gBlue" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#7F8BE0"/><stop offset=".6" stop-color="#3B4595"/><stop offset="1" stop-color="#232A63"/></radialGradient>
+    <linearGradient id="gMetal" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E3E5EA"/><stop offset=".45" stop-color="#B9BEC8"/><stop offset="1" stop-color="#8E94A1"/></linearGradient>
+    <radialGradient id="gGlow" cx=".5" cy=".7" r=".7"><stop offset="0" stop-color="#FFD37A"/><stop offset=".5" stop-color="#FF8A3D"/><stop offset="1" stop-color="#7A2A14"/></radialGradient>
+    <radialGradient id="gHalo" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="var(--surface)" stop-opacity=".9"/><stop offset="1" stop-color="var(--surface)" stop-opacity="0"/></radialGradient>
+    <clipPath id="cBelt"><rect x="12" y="238" width="336" height="10" rx="5"/></clipPath>
+  </defs>`;
+}
+function heroSVG(){
+  const cx=180, L=110, R=250, top=166, bot=234;
+  let drips=`M${L},${top} L${L},${top+8}`;
+  const dd=[12,20,10,24,14,9,19,13,22,11];
+  const seg=(R-L)/dd.length;
+  dd.forEach((d,j)=>{ const x0=L+j*seg, m=x0+seg/2, x1=x0+seg; drips+=` C${x0+2},${top+8} ${m-5},${top+8+d} ${m},${top+8+d} C${m+5},${top+8+d} ${x1-2},${top+8} ${x1},${top+8}`; });
+  drips+=` L${R},${top} Z`;
+  const roses=[]; const n=7;
+  for(let k=0;k<n;k++){ const t=Math.PI*(1.05+k*(0.9/(n-1))); roses.push([cx+Math.cos(t)*62, top+Math.sin(t)*8-1]); }
+  for(let k=0;k<n;k++){ const t=Math.PI*(0.05+k*(0.9/(n-1))); roses.push([cx+Math.cos(t)*62, top+Math.sin(t)*8+1]); }
+  const stripes=Array.from({length:22},(_,i)=>`<rect x="${i*20-40}" y="238" width="10" height="10" fill="var(--belt-2)" transform="skewX(-20)"/>`).join('');
+  const rollers=Array.from({length:9},(_,i)=>`<circle cx="${30+i*38}" cy="252" r="5" fill="#6A4943"/><circle cx="${30+i*38}" cy="252" r="1.8" fill="#2A1714"/>`).join('');
+  return `<svg id="heroSvg" viewBox="0 0 360 300" role="img" aria-label="A cake being built step by step: pan, batter, oven, cream, strawberries and a candle">
+    ${artDefs()}
+    <rect width="360" height="300" fill="var(--wall)"/>
+    <circle cx="180" cy="160" r="150" fill="url(#gHalo)"/>
+    <g opacity=".7"><rect x="262" y="74" width="80" height="5" rx="2.5" fill="var(--tile)"/><rect x="272" y="50" width="16" height="24" rx="5" fill="var(--surface)"/><rect x="274" y="44" width="12" height="8" rx="3" fill="var(--pink)" opacity=".7"/>
+      <rect x="296" y="56" width="14" height="18" rx="4" fill="var(--surface)"/><path d="M320 74 v-22 m-4 0 h8" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" opacity=".6"/></g>
+    <g class="h-all">
+      <rect x="8" y="236" width="344" height="30" rx="15" fill="var(--belt)"/>
+      <g clip-path="url(#cBelt)"><rect x="12" y="238" width="336" height="10" fill="#4A2E29"/><g class="h-stripes">${stripes}</g></g>
+      ${rollers}
+      <ellipse class="h-plate" cx="${cx}" cy="237" rx="92" ry="10" fill="var(--plate-top)" stroke="var(--plate)" stroke-width="2"/>
+      <g class="h-pan"><path d="M104,198 V232 A76,9 0 0 0 256,232 V198 Z" fill="url(#gMetal)"/><ellipse cx="${cx}" cy="198" rx="76" ry="9" fill="#D5D8DF" stroke="#9CA2AE" stroke-width="1.5"/><ellipse cx="${cx}" cy="199" rx="70" ry="6.5" fill="#6C7280"/></g>
+      <ellipse class="h-batter" cx="${cx}" cy="199" rx="70" ry="6.5" fill="#F2D08F"/>
+      <g class="h-nozzle"><path d="M156,-4 L204,-4 L188,40 L172,40 Z" fill="var(--pink)"/><rect x="172" y="38" width="16" height="8" rx="3" fill="#C9CDD5"/></g>
+      <rect class="h-stream" x="176" y="46" width="8" height="152" rx="4" fill="#F2D08F"/>
+      <g class="h-cake">
+        <path d="M${L},${top} V${bot} A70,9 0 0 0 ${R},${bot} V${top} Z" fill="url(#gSponge)"/>
+        <path d="M${L},196 A70,9 0 0 0 ${R},196 V204 A70,9 0 0 1 ${L},204 Z" fill="var(--cream)"/>
+        <g fill="#E23349" opacity=".9"><ellipse cx="128" cy="205" rx="6" ry="2.6"/><ellipse cx="158" cy="208" rx="6" ry="2.6"/><ellipse cx="192" cy="208" rx="6" ry="2.6"/><ellipse cx="226" cy="205" rx="6" ry="2.6"/></g>
+        <g fill="#C98E4A" opacity=".35"><circle cx="124" cy="180" r="1.2"/><circle cx="150" cy="186" r="1.2"/><circle cx="178" cy="182" r="1.2"/><circle cx="210" cy="186" r="1.2"/><circle cx="236" cy="180" r="1.2"/><circle cx="136" cy="220" r="1.2"/><circle cx="170" cy="224" r="1.2"/><circle cx="204" cy="222" r="1.2"/><circle cx="232" cy="218" r="1.2"/></g>
+        <path d="M${L},${top} V${bot} A70,9 0 0 0 ${R},${bot} V${top} Z" fill="url(#gSide)"/>
+        <ellipse cx="${cx}" cy="${top}" rx="70" ry="9" fill="#F7DDAE"/>
+      </g>
+      <g class="h-frost"><path d="${drips}" fill="url(#gCream)"/><ellipse cx="${cx}" cy="${top}" rx="71" ry="10" fill="var(--cream)"/><ellipse cx="160" cy="${top-3}" rx="30" ry="3" fill="#fff" opacity=".8"/></g>
+      ${roses.slice(0,n).map((r,k)=>artRosette(r[0],r[1],.9,k*.05)).join('')}
+      ${artStrawberry(162,158,1.15,-12,'h-drop',0)}${artStrawberry(196,160,1.15,14,'h-drop',.12)}${artStrawberry(180,150,1.2,0,'h-drop',.24)}
+      ${artBlueberry(146,166,1,'h-drop',.34)}${artBlueberry(214,167,1,'h-drop',.4)}${artBlueberry(206,156,.9,'h-drop',.46)}
+      <g class="h-candle"><rect x="186" y="118" width="6" height="36" rx="2" fill="#FFF"/><path d="M186,124 l6,-4 M186,132 l6,-4 M186,140 l6,-4 M186,148 l6,-4" stroke="var(--pink)" stroke-width="2"/>
+        <path class="h-flame" d="M189,103 C193,108 194,112 189,116 C184,112 185,108 189,103Z" fill="#FFB53D"/><path class="h-flame" d="M189,108 C191,111 191,113 189,115 C187,113 187,111 189,108Z" fill="#FFF2B8"/></g>
+      ${roses.slice(n).map((r,k)=>artRosette(r[0],r[1],1,.3+k*.05)).join('')}
+      <text class="h-score" x="180" y="92" text-anchor="middle" font-family="Silkscreen, monospace" font-size="17" fill="var(--pink)" stroke="var(--surface)" stroke-width="4" paint-order="stroke">PERFECT +100</text>
+      <g class="h-oven"><rect x="84" y="92" width="192" height="150" rx="20" fill="#F7EEEA" stroke="#E4D2CB" stroke-width="2"/>
+        <rect x="150" y="84" width="60" height="12" rx="6" fill="#E4D2CB"/>
+        <circle cx="108" cy="110" r="5" fill="#D8C4BC"/><circle cx="124" cy="110" r="5" fill="#D8C4BC"/>
+        <text x="252" y="115" text-anchor="end" font-family="Silkscreen, monospace" font-size="11" fill="var(--pink)">0:03</text>
+        <rect x="104" y="124" width="152" height="96" rx="14" fill="#2B1A18"/><rect class="h-glow" x="108" y="128" width="144" height="88" rx="11" fill="url(#gGlow)"/>
+        <rect x="118" y="130" width="40" height="5" rx="2.5" fill="#fff" opacity=".25"/></g>
+    </g></svg>`;
+}
+const HERO_STEPS=[[0,'s-pan','Pick a pan',0],[1000,'s-pour','Pour the batter',10],[2400,'s-oven','Bake it',20],[3800,'s-baked',null,40],[4300,'s-cream','Spread the cream',55],[5000,'s-rose',null,65],[5500,'s-berry','Add toppings',80],[6300,'s-candle',null,90],[6800,'s-score','Perfect cake',100],[7500,'s-tag',null,100]];
+let heroTimers=[];
+function stopHero(){ heroTimers.forEach(clearTimeout); heroTimers=[]; }
+function runHero(){
+  stopHero();
+  const svg=document.getElementById('heroSvg'); if(!svg) return;
+  const lab=document.getElementById('hudLabel'), num=document.getElementById('hudStage'), sc=document.getElementById('hudScore'), tag=document.getElementById('heroTag');
+  const all=HERO_STEPS.map(x=>x[1]);
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){ svg.classList.add(...all); lab.textContent='Perfect cake'; num.textContent='STAGE 6/6'; sc.textContent='★ 100'; tag.classList.add('on'); return; }
+  svg.classList.remove(...all,'s-out'); tag.classList.remove('on');
+  let stage=0;
+  HERO_STEPS.forEach(([t,cls,label,score])=>{
+    heroTimers.push(setTimeout(()=>{
+      svg.classList.add(cls);
+      if(label){ stage=Math.min(6,stage+1); lab.textContent=label; num.textContent=`STAGE ${stage}/6`; }
+      sc.textContent='★ '+String(score).padStart(3,'0');
+      if(cls==='s-tag'){ tag.classList.add('on'); svg.parentNode.classList.add('tagging'); }
+    },t));
+  });
+  heroTimers.push(setTimeout(()=>{ svg.classList.add('s-out'); tag.classList.remove('on'); svg.parentNode.classList.remove('tagging'); },10800));
+  heroTimers.push(setTimeout(runHero,11300));
+}
+const STEP_ICONS=[
+ `<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="36" width="42" height="7" rx="3.5" fill="var(--belt)"/><path d="M12 22v12a12 3 0 0 0 24 0V22z" fill="var(--sponge)"/><path d="M12 22q3 5 6 0q3 6 6 0q3 6 6 0q3 5 6 0" fill="var(--cream)"/><ellipse cx="24" cy="22" rx="12" ry="3" fill="var(--cream)"/><path d="M24 11c3 0 4 3 3 5c-.6 1.3-2 2-3 2s-2.4-.7-3-2c-1-2 0-5 3-5z" fill="#E23349"/></svg>`,
+ `<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="8" width="36" height="32" rx="7" fill="var(--surface)" stroke="var(--line)" stroke-width="2"/><rect x="11" y="17" width="26" height="18" rx="4" fill="#2B1A18"/><rect x="13" y="19" width="22" height="14" rx="3" fill="url(#gGlowIc)"/><circle cx="13" cy="12.5" r="1.8" fill="var(--muted)"/><circle cx="19" cy="12.5" r="1.8" fill="var(--muted)"/><defs><radialGradient id="gGlowIc" cx=".5" cy=".8" r=".8"><stop offset="0" stop-color="#FFD37A"/><stop offset="1" stop-color="#FF7A3D"/></radialGradient></defs></svg>`,
+ `<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="12" width="18" height="18" rx="3" fill="var(--surface)" stroke="var(--line)" stroke-width="2"/><rect x="26" y="12" width="18" height="18" rx="3" fill="var(--surface)" stroke="var(--line)" stroke-width="2"/><path d="M8 22v4a5 1.5 0 0 0 10 0v-4z" fill="var(--pink)" opacity=".75"/><ellipse cx="13" cy="22" rx="5" ry="1.5" fill="var(--cream)"/><path d="M30 22v4a5 1.5 0 0 0 10 0v-4z" fill="var(--sponge)"/><ellipse cx="35" cy="22" rx="5" ry="1.5" fill="var(--cream)"/><path d="M35 17l1 2 2 .3-1.5 1.4.4 2-1.9-1-1.9 1 .4-2L32 19.3l2-.3z" fill="var(--butter)"/><path d="M13 36h22" stroke="var(--muted)" stroke-width="2" stroke-dasharray="2 3" stroke-linecap="round"/></svg>`
+];
+function vLanding(){
+  const shopsHTML=BAKERIES.map((b,i)=>`<div class="shop" style="--aw:${['#E0457B','#7FA85A','#F3CF74'][i]}"><b>${esc(b.name)}</b><div class="meta">${b.area}, ${b.delivery?'delivers and does pickup':'pickup only'}</div>${badge(b)}</div>`).join('');
+  return `<section class="lp">
+    <div class="lp-hero">
+      ${heroSVG()}
+      <div class="lp-hud" aria-hidden="true"><div class="stage-l"><span id="hudStage">STAGE 1/6</span><b id="hudLabel">Pick a pan</b></div><div class="score" id="hudScore">★ 000</div></div>
+      <div class="lp-tag" id="heroTag" aria-hidden="true"><div class="dot">${LOGO}</div><div><b>Baking at Seoul Sugar Studio</b><span>At your door tomorrow</span></div></div>
+    </div>
+    <div class="lp-intro">
+      <h1 class="lp-h1">Build your cake like a game. A real bakery bakes it.</h1>
+      <p class="lp-sub">Stack the layers, spread the cream, drop the strawberries. A bakery in Seoul bakes exactly what you made.</p>
+      <div class="lp-cta"><button class="btn" data-act="start">Start building</button><button class="btn ghost" data-act="ai">Let AI suggest a cake</button></div>
+      <p class="lp-fine">No account needed. Guests get 10% off.</p>
+    </div>
+    <div class="lp-sec"><h2>How it works</h2>
+      <ol class="lp-steps">
+        <li><div class="ic">${STEP_ICONS[0]}</div><div><b>Build it in the kitchen</b><span>Pan, batter, oven, cream, toppings. Every choice shows up on your cake right away.</span></div></li>
+        <li><div class="ic">${STEP_ICONS[1]}</div><div><b>A local bakery bakes it</b><span>Your order goes straight to the bakery with a picture and every ingredient. No DMs.</span></div></li>
+        <li><div class="ic">${STEP_ICONS[2]}</div><div><b>See yours next to the real one</b><span>The bakery sends a photo when it's ready. Share the before and after.</span></div></li>
+      </ol></div>
+    <div class="lp-sec"><h2>Eat what's right for you</h2>
+      <p>Tell us what to avoid. Anything unsafe is locked before you ever pick it.</p>
+      <div class="diet">${['Halal','No milk','No egg','No nuts','No wheat','Low sugar','Vegan'].map(x=>`<span><i></i>${x}</span>`).join('')}</div>
+      <div class="lp-lock"><div class="lk"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2.2" fill="none"/></svg></div>
+        <div><b>Rum buttercream</b> is locked when you choose Halal, and the app tells you why.</div></div></div>
+    <div class="lp-sec"><h2>Baked by bakeries you can visit</h2><p>Small shops in Seoul, each with their own ingredients.</p><div class="shops">${shopsHTML}</div></div>
+    <div class="lp-final">
+      <svg class="deco" viewBox="0 0 120 120" aria-hidden="true">${artDefs()}${artStrawberry(70,60,2.6,-18)}${artBlueberry(34,88,1.8)}${artBlueberry(100,98,1.4)}</svg>
+      <div class="px">LEVEL 1</div>
+      <h2>Your first cake is one tap away.</h2>
+      <button class="btn" data-act="start">Start building</button>
+    </div>
+    <p class="lp-foot">Hackathon demo. Bakeries, prices and orders are samples.</p>
+  </section>`;
+}
+function optChips(){
+  return `<div class="chips" role="group" aria-label="Dietary options">${OPTIONS.map(o=>`<button class="chip" data-act="opt" data-v="${o.id}" aria-pressed="${state.opts.has(o.id)}">${o.label}</button>`).join('')}</div>`;
+}
+function vOptions(){
+  return `<div class="pad stack">
+    <div><h2>Anything to avoid?</h2><p class="muted">We'll only show bakeries and ingredients that fit. Skip if nothing applies.</p></div>
+    ${optChips()}
+    <p class="muted small">Safety filters are fixed rules on each ingredient, never AI guesses.</p>
+    <button class="btn" data-act="toBakeries">Show bakeries</button>
+    <button class="btn ghost" data-act="home">Back</button></div>`;
+}
+function badge(b){
+  if(b.trust==='verified') return `<span class="badge ok">✓ Verified${b.halal?' halal':''}</span>`;
+  if(b.trust==='self') return `<span class="badge self">Self-declared${b.halal?' halal':''}</span>`;
+  return `<span class="badge plain">Standard kitchen</span>`;
+}
+function vBakeries(){
+  const list=BAKERIES.filter(b=>bakeryFits(b));
+  const optsTxt=[...state.opts].map(id=>OPTIONS.find(o=>o.id===id).label).join(', ');
+  return `<div class="pad stack">
+    <div><h2>Pick a bakery</h2><p class="muted">${optsTxt?`Showing bakeries that can do: ${esc(optsTxt)}.`:'All bakeries near you.'}</p></div>
+    ${list.length?list.map(b=>`<div class="card bk">
+      <div class="pic" style="background:${b.bg}">${b.pic}</div>
+      <div><h3>${esc(b.name)}</h3><div class="meta">${b.area} · from ${won(SIZES[0].price*b.mult)} · ready ${b.lead.toLowerCase()}</div>
+        <div style="margin:6px 0">${badge(b)}<span class="badge plain">${b.delivery?'Delivery + pickup':'Pickup only'}</span><span class="badge plain">Up to ${b.maxLayers} layers</span></div>
+        ${b.trust==='self'&&state.opts.has('halal')?`<div class="notice">This bakery says it's halal but hasn't shown us a certificate yet.</div>`:''}
+        <button class="btn sm" style="margin-top:8px" data-act="pickBakery" data-v="${b.id}">Build here</button></div></div>`).join('')
+      :`<div class="card"><b>No bakery can make that combination yet.</b><p class="muted">Try removing one option.</p><button class="btn sm" data-act="options">Change options</button></div>`}
+    <button class="btn ghost" data-act="${state.preset?'ai':'options'}">Back</button></div>`;
+}
+function vAI(){
+  const a=state.ai;
+  const results=a.results?`<h3>Halmeoni suggests</h3><div class="stack">${a.results.map((r,i)=>`<div class="card suggest">
+      <div class="mini">${cakeSVG(presetCake(r),{label:r.name,crop:true})}</div>
+      <div><b style="font-size:18px">${esc(r.name)}</b><p class="muted small" style="margin:2px 0 8px">${esc(r.reason)}</p>
+      <button class="btn sm pink" data-act="usePreset" data-v="${i}">Use this cake</button></div></div>`).join('')}</div>
+      ${a.note?`<p class="muted small">${esc(a.note)}</p>`:''}`:'';
+  return `<div class="pad stack">
+    <div style="display:flex; gap:10px; align-items:flex-start"><div class="halmeoni" style="position:static"><div class="face" aria-hidden="true">👵</div></div>
+      <div class="bubble">Tell me what you feel like, dear, and I'll suggest a cake. You can change anything after.</div></div>
+    <div><h3>What's the occasion?</h3><div class="chips">${OCCASIONS.map(o=>`<button class="chip" data-act="aiOcc" data-v="${o}" aria-pressed="${a.occasion===o}">${o}</button>`).join('')}</div></div>
+    <div><h3>What are you craving?</h3><div class="chips">${CRAVINGS.map(([id,l])=>`<button class="chip" data-act="aiCrave" data-v="${id}" aria-pressed="${a.cravings.has(id)}">${l}</button>`).join('')}</div></div>
+    <div><h3>How sweet?</h3><div class="chips">${SWEET.map(([v,l])=>`<button class="chip" data-act="aiSweet" data-v="${v}" aria-pressed="${a.sweet===v}">${l}</button>`).join('')}</div></div>
+    <div><h3>Anything to avoid?</h3>${optChips()}</div>
+    <label class="f">Anything else? <span class="muted small">Optional</span>
+      <input class="textin" id="aiText" maxlength="140" placeholder="My mom loves strawberries but not heavy cream" value="${esc(a.text)}"></label>
+    <button class="btn pink" data-act="aiGo" ${a.loading?'disabled':''}>${a.loading?'Halmeoni is thinking…':'Suggest cakes'}</button>
+    ${results}
+    <button class="btn ghost" data-act="home">Back</button></div>`;
+}
+function stationBar(){
+  const order=['pan','size','batter','oven','frosting','toppings','lettering','box'];
+  const cur=curStation(); const ci=order.indexOf(cur);
+  return `<nav class="stations" aria-label="Kitchen stations">${order.map((k,j)=>`<div class="st ${k===cur?'on':''} ${j<ci?'done':''}" ${k===cur?'aria-current="step"':''}><b>${STATION_INFO[k].icon}</b>${STATION_INFO[k].label}</div>`).join('')}</nav>`;
+}
+function stageHTML(){
+  const tip=state.tip||STATION_INFO[curStation()].tip;
+  return `<div class="tiles"></div><div class="window"></div><div class="shelf"><span style="left:6px">🫙</span><span style="left:38px">🥄</span><span style="left:66px">🧂</span></div>
+    <div class="halmeoni"><div class="face" aria-hidden="true">👵</div><div class="bubble" aria-live="polite">${esc(tip)}</div></div>
+    <div class="belt" id="belt"></div>
+    <div class="cake-wrap" id="cakeWrap">${cakeSVG(state.cake,{anim:state.anim||{},interactive:true,letterShown:state.letterShown})}</div>
+    ${state.busy==='oven'?`<div class="overlay"><div class="oven"><div class="knobs"><i></i><i></i></div><div class="timer" id="ovenTimer">0:03</div><div class="door"></div></div></div>`:''}
+    ${state.busy==='box'?`<div class="overlay"><div class="box-front"></div><div class="box-lid"></div><div class="box-bow">🎀</div></div>`:''}`;
+}
+function tileFor(ing,sel,extra=''){
+  const lr=lockReason(ing);
+  const vis=ing.e?`<span class="em">${ing.e}</span>`:`<span class="sw" style="background:${ing.color}"></span>`;
+  if(lr) return `<button class="tile locked" data-act="why" data-v="${ing.id}" aria-label="${esc(ing.name)}, locked. ${esc(lr)}"><span class="lk" aria-hidden="true">🔒</span>${vis}${esc(ing.name)}<span class="why">Why?</span></button>`;
+  return `<button class="tile" data-act="${ing.e?'addTop':'pick'}" data-v="${ing.id}" aria-pressed="${sel}">${extra}${vis}${esc(ing.name)}${ing.ko?`<span class="ko">${esc(ing.ko)}</span>`:''}<span class="pr">${ing.price?'+'+won(ing.price):'Included'}</span></button>`;
+}
+function panelHTML(){
+  const st=curStation(), L=curLayer(), b=bakery(), c=state.cake;
+  const info=STATION_INFO[st];
+  const layerTxt=state.step.phase==='build'&&c.layers.length>1?` <span class="muted small">· layer ${state.step.layer+1}</span>`:'';
+  let body='';
+  if(st==='pan') body=`<div class="grid">${SHAPES.map(s=>`<button class="tile" data-act="pick" data-v="${s.id}" aria-pressed="${c.shape===s.id}"><span class="em">${s.id==='round'?'⚪':s.id==='square'?'⬜':'🤍'}</span>${s.name}</button>`).join('')}</div>`;
+  if(st==='size') body=`<div class="grid">${SIZES.map(s=>`<button class="tile" data-act="pick" data-v="${s.id}" aria-pressed="${c.size===s.id}"><span class="em">${s.id==='s'?'🧑‍🤝‍🧑':s.id==='m'?'👨‍👩‍👧‍👦':'🎉'}</span>${s.name}<span class="ko">${s.people}</span><span class="pr">${won(s.price*b.mult)}</span></button>`).join('')}</div>`;
+  if(st==='batter') body=`<div class="grid">${BATTERS.filter(x=>stocked(x,b.id)).map(x=>tileFor(x,L.batter===x.id)).join('')}</div>`;
+  if(st==='oven') body=`<p class="muted" style="margin-top:8px">${L.baked?'Baked and golden. Move on to the cream.':'Your '+ALL[L.batter].name.toLowerCase()+' batter is ready.'}</p>
+    ${L.baked?'':`<div class="bigaction"><button class="btn pink" data-act="bake" ${state.busy?'disabled':''}>🔥 Bake it</button></div>`}`;
+  if(st==='frosting') body=`<div class="grid">${FROSTINGS.filter(x=>stocked(x,b.id)).map(x=>tileFor(x,L.frosting===x.id)).join('')}</div>`;
+  if(st==='toppings'){
+    const counts={}; L.toppings.forEach(t=>counts[t.id]=(counts[t.id]||0)+1);
+    body=`<p class="muted small" style="margin:4px 0 0">${L.toppings.length}/12 on this layer · tap a topping on the cake to remove it</p>
+      <div class="grid">${TOPPINGS.filter(x=>stocked(x,b.id)).map(x=>tileFor(x,!!counts[x.id],counts[x.id]?`<span class="cnt">${counts[x.id]}</span>`:'')).join('')}</div>`;
+  }
+  if(st==='lettering') body=`<div class="stack" style="margin-top:10px"><input class="textin" id="letterIn" maxlength="18" placeholder="Happy Birthday!" value="${esc(c.lettering)}" aria-label="Message on the cake">
+    <div class="chips">${['Happy Birthday!','생일 축하해!','Love you','Congrats!','Thank you'].map(t=>`<button class="chip" data-act="letter" data-v="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+    <p class="muted small">+${won(2000)} for lettering. Leave empty for none.</p></div>`;
+  if(st==='box') body=`<div class="bigaction"><button class="btn pink" data-act="boxIt" ${state.busy?'disabled':''}>🎁 Box it up</button></div>`;
+  return `<h2>${info.title}${layerTxt}</h2>${body}`;
+}
+function canNext(){
+  const st=curStation(), L=curLayer(), c=state.cake;
+  if(state.busy) return false;
+  if(st==='pan') return !!c.shape;
+  if(st==='size') return !!c.size;
+  if(st==='batter') return !!L.batter;
+  if(st==='oven') return L.baked;
+  if(st==='frosting') return !!L.frosting;
+  if(st==='box') return false;
+  return true;
+}
+function vKitchen(){
+  const p=priceOf(state.cake,state.bakery);
+  return `<div class="kit-top">${stationBar()}<div class="stage" id="stage">${stageHTML()}</div></div>
+    <section class="panel" id="panel">${panelHTML()}</section>
+    <div class="bar"><div class="bar-in">
+      <button class="btn ghost sm" data-act="back" aria-label="Back">←</button>
+      <div class="price"><span>${esc(bakery().name)}</span><b>${won(p)}</b></div>
+      <button class="btn" data-act="next" ${canNext()?'':'disabled'}>${curStation()==='toppings'?'Done':'Next'}</button>
+    </div></div>`;
+}
+function modalLayer(){
+  const b=bakery(), n=state.cake.layers.length;
+  return `<div class="modal-bg" data-act="closeModal"><div class="modal" role="dialog" aria-modal="true" aria-label="Add another layer">
+    <h2>Add another layer?</h2><p class="muted">${n<b.maxLayers?`A smaller tier goes on top (+${won(15000)}). ${esc(b.name)} makes up to ${b.maxLayers} layers.`:`${esc(b.name)} makes up to ${b.maxLayers} layers, so this is the top.`}</p>
+    <div class="stack">${n<b.maxLayers?`<button class="btn" data-act="addLayer">Add a layer</button>`:''}<button class="btn pink" data-act="finish">Finish and write a message</button></div></div></div>`;
+}
+function describeCake(c){
+  return c.layers.map((L,i)=>{
+    const tops={}; L.toppings.forEach(t=>tops[t.id]=(tops[t.id]||0)+1);
+    const tt=Object.entries(tops).map(([id,n])=>`${ALL[id].name.toLowerCase()}${n>1?' ×'+n:''}`).join(', ');
+    return `${c.layers.length>1?`Layer ${i+1}: `:''}${ALL[L.batter]?.name||'?'} sponge, ${ALL[L.frosting]?.name.toLowerCase()||'no cream'}${tt?', '+tt:''}`;
+  });
+}
+function vResult(){
+  const c=state.cake, s=statsOf(c), p=priceOf(c,state.bakery), disc=p*GUEST_DISCOUNT;
+  const size=SIZES.find(x=>x.id===c.size);
+  const conf=Array.from({length:22},(_,i)=>`<i style="left:${(i*37)%100}%; background:${['#FF6FA5','#FFD45E','#4FC79C','#7B45B0','#6FC3FF'][i%5]}; animation-delay:${(i%7)*.08}s"></i>`).join('');
+  return `<div class="result-stage"><div class="tiles"></div><div class="confetti" aria-hidden="true">${conf}</div>
+      <div class="cake-wrap"><div class="spin" style="width:100%; display:flex; justify-content:center">${cakeSVG(c,{label:'Your finished cake'})}</div></div></div>
+    <div class="pad stack">
+      <div><h2>Your cake is ready to order</h2>
+        <div class="stars">
+          <div class="star"><b style="animation-delay:.9s">⭐</b>Safe for you</div>
+          <div class="star ${s.taste?'':'off'}"><b style="animation-delay:1.1s">⭐</b>${s.taste?'Tasty combo':'Odd combo'}</div>
+          <div class="star ${s.goal?'':'off'}"><b style="animation-delay:1.3s">⭐</b>${s.lowSugar?(s.goal?'Low sugar':'Too sweet'):'Looks great'}</div>
+        </div>
+        <div class="stats"><div class="stat"><b>${s.kcal}</b><span>kcal</span></div><div class="stat"><b>${s.sugar}g</b><span>sugar</span></div><div class="stat"><b>${s.protein}g</b><span>protein</span></div><div class="stat"><b>${s.match}%</b><span>match</span></div></div>
+        <p class="muted small">Per slice, estimated. Real values depend on the bakery's recipe.</p></div>
+      <div class="card"><b>${SHAPES.find(x=>x.id===c.shape).name} · ${size.people}</b>
+        <div class="ing">${describeCake(c).map(esc).join('<br>')}${c.lettering?`<br>Message: “${esc(c.lettering)}”`:''}</div>
+        <div class="ing" style="margin-top:4px">Baked by ${esc(bakery().name)}</div></div>
+      <div class="rows"><div><span>Cake</span><span>${won(p)}</span></div>
+        <div class="disc"><span>Guest order, no signup (−10%)</span><span>−${won(disc)}</span></div>
+        <div class="tot"><span>Total</span><span>${won(p-disc)}</span></div></div>
+      <button class="btn pink" data-act="checkout">Order as guest</button>
+      <button class="btn ghost" data-act="editCake">Change something</button></div>`;
+}
+function tomorrow(n=1){ const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function vCheckout(){
+  const b=bakery(), f=state.form, p=priceOf(state.cake,state.bakery), total=p*(1-GUEST_DISCOUNT);
+  const lead=b.lead==='In 2 days'?2:1;
+  return `<div class="pad stack">
+    <div><h2>Checkout</h2><p class="muted">No account needed. We'll text you a link to follow your cake.</p></div>
+    <label class="f">Your name<input class="textin" id="fName" autocomplete="name" value="${esc(f.name||'')}"></label>
+    <label class="f">Phone number<input class="textin" id="fPhone" type="tel" autocomplete="tel" placeholder="010-1234-5678" value="${esc(f.phone||'')}"></label>
+    <div class="seg" role="group" aria-label="Pickup or delivery">
+      <button class="chip" data-act="mode" data-v="pickup" aria-pressed="${f.mode==='pickup'}">Pickup</button>
+      <button class="chip" data-act="mode" data-v="delivery" aria-pressed="${f.mode==='delivery'}" ${b.delivery?'':'disabled'}>${b.delivery?'Delivery':'Delivery (not offered)'}</button></div>
+    ${f.mode==='delivery'?`<label class="f">Delivery address<input class="textin" id="fAddr" autocomplete="street-address" value="${esc(f.addr||'')}"></label>`:`<p class="muted small">Pick up at ${esc(b.name)}, ${b.area}.</p>`}
+    <div class="seg"><label class="f">Date<input class="textin" id="fDate" type="date" min="${tomorrow(lead)}" value="${esc(f.date||tomorrow(lead))}"></label>
+      <label class="f">Time<select class="textin" id="fTime">${['11:00','13:00','15:00','17:00','19:00'].map(t=>`<option ${f.time===t?'selected':''}>${t}</option>`).join('')}</select></label></div>
+    <p class="muted small">Kitchens may handle other ingredients, so cross-contact is possible.</p>
+    ${state.formErr?`<p class="err" role="alert">${esc(state.formErr)}</p>`:''}
+    <button class="btn pink" data-act="pay" ${state.busy?'disabled':''}>Pay ${won(total)} (demo)</button>
+    <button class="btn ghost" data-act="toResult">Back</button></div>`;
+}
+const STEPS_PICKUP=[['received','Order received','🧾'],['accepted','Bakery accepted','👍'],['baking','Baking now','👩‍🍳'],['ready','Ready','🎂'],['pickedup','Picked up','🛍️']];
+const STEPS_DELIV=[['received','Order received','🧾'],['accepted','Bakery accepted','👍'],['baking','Baking now','👩‍🍳'],['ready','Ready','🎂'],['delivering','On the way','🛵'],['delivered','Delivered','🏠']];
+function stepsFor(o){ return o.customer.mode==='delivery'?STEPS_DELIV:STEPS_PICKUP; }
+function vTracking(){
+  const o=state.order;
+  if(!o) return `<div class="pad"><p>Loading your order…</p></div>`;
+  const steps=stepsFor(o); const idx=steps.findIndex(s=>s[0]===o.status);
+  const cakeObj=o.cake;
+  return `<div class="pad stack">
+    <div><h2>Order ${esc(o.code)}</h2><p class="muted">${esc(o.bakeryName)} · ${o.customer.mode==='delivery'?'delivery':'pickup'} on ${esc(o.date)} at ${esc(o.time)}</p></div>
+    ${o.status==='declined'?`<div class="card"><b>The bakery couldn't take this order.</b><p class="muted">You haven't been charged. Try another bakery with the same design.</p><button class="btn sm" data-act="editCake">Choose another bakery</button></div>`:
+    `<ol class="steps">${steps.map((s,j)=>`<li class="${j<idx?'done':j===idx?'now':''}"><span class="dot">${j<idx?'✓':s[2]}</span>${s[1]}</li>`).join('')}</ol>`}
+    ${o.photo?`<h3>Virtual vs real</h3><div class="vs">
+      <figure><div class="pixel">${cakeSVG(cakeObj,{label:'Your design'})}</div><figcaption>You built this</figcaption></figure>
+      <figure><div class="photo">${cakeSVG(cakeObj,{label:'Photo from the bakery'})}</div><figcaption>Photo from ${esc(o.bakeryName)}</figcaption></figure></div>
+      <button class="btn sm ghost" data-act="share">Share this</button>`:
+      `<div class="card suggest"><div class="mini">${cakeSVG(cakeObj,{label:'Your design',crop:true})}</div><div class="ing">${describeCake(cakeObj).map(esc).join('<br>')}<br><b>Total ${won(o.total)}</b></div></div>
+       <p class="muted small">The bakery sends a real photo when your cake is ready.</p>`}
+    <p class="muted small">Demo: open <b>Bakery view</b> (top right) to accept and update this order. This page updates live.</p>
+    <button class="btn ghost" data-act="newCake">Build another cake</button></div>`;
+}
+function nextActions(o){
+  const d=o.customer.mode==='delivery';
+  return ({received:[['accepted','Accept'],['declined','Decline']],accepted:[['baking','Start baking']],baking:[['ready','Mark ready + send photo']],
+    ready:d?[['delivering','Out for delivery']]:[['pickedup','Picked up']],delivering:[['delivered','Delivered']]})[o.status]||[];
+}
+function vDashboard(){
+  const list=state.orders;
+  const label={received:'New',accepted:'Accepted',baking:'Baking',ready:'Ready',delivering:'On the way',delivered:'Delivered',pickedup:'Picked up',declined:'Declined'};
+  return `<div class="pad stack">
+    <div><h2>Bakery orders</h2><p class="muted">Orders arrive here the moment a customer pays. ${dbApi?'Live across devices.':'Stored on this device for the demo.'}</p></div>
+    ${list.length?list.map(o=>`<div class="card ord">
+      <div class="ord-top"><b>${esc(o.code)}</b><span class="status ${o.status}">${label[o.status]||o.status}</span></div>
+      <div class="meta">${esc(o.bakeryName)} · ${o.customer.mode==='delivery'?'Delivery':'Pickup'} ${esc(o.date)} ${esc(o.time)}</div>
+      <div class="ord-body"><div class="mini">${cakeSVG(o.cake,{label:'Ordered cake',crop:true})}</div>
+        <div class="ing">${describeCake(o.cake).map(esc).join('<br>')}${o.cake.lettering?`<br>Message: “${esc(o.cake.lettering)}”`:''}
+        ${o.options&&o.options.length?`<br><b>Needs: ${o.options.map(id=>esc(OPTIONS.find(x=>x.id===id)?.label||id)).join(', ')}</b>`:''}
+        <br>${esc(o.customer.name)} · ${esc(o.customer.phone)}${o.customer.mode==='delivery'?`<br>${esc(o.customer.addr)}`:''}<br><b>${won(o.total)}</b></div></div>
+      ${nextActions(o).length?`<div class="act">${nextActions(o).map(([s,l])=>`<button class="btn sm ${s==='declined'?'ghost':''}" data-act="setStatus" data-v="${o.id}|${s}">${l}</button>`).join('')}</div>`:''}
+    </div>`).join(''):`<div class="card"><b>No orders yet.</b><p class="muted">Switch to Customer view, build a cake and order it. It shows up here right away.</p></div>`}</div>`;
+}
+
+/* ================= RENDER ================= */
+let modal=null;
+function render(){
+  const v=state.view;
+  const body={landing:vLanding,options:vOptions,bakeries:vBakeries,ai:vAI,kitchen:vKitchen,result:vResult,checkout:vCheckout,tracking:vTracking,dashboard:vDashboard}[v]();
+  app.innerHTML=header()+`<main>${body}</main>`+(modal==='layer'?modalLayer():'');
+  afterRender();
+}
+function renderStage(keepAnim){
+  const st=document.getElementById('stage'); if(!st) return render();
+  st.innerHTML=stageHTML();
+  const nav=app.querySelector('.stations'); if(nav) nav.outerHTML=stationBar();
+  const panel=document.getElementById('panel'); if(panel) panel.innerHTML=panelHTML();
+  const bar=app.querySelector('.bar'); if(bar){ bar.querySelector('.price b').textContent=won(priceOf(state.cake,state.bakery));
+    const nb=bar.querySelector('[data-act="next"]'); nb.disabled=!canNext(); nb.textContent=curStation()==='toppings'?'Done':'Next'; }
+  if(!keepAnim) state.anim=null;
+}
+function afterRender(){ state.anim=null; if(state.view==='landing') runHero(); else stopHero(); }
+function go(view){ modal=null; state.view=view; state.tip=null; window.scrollTo(0,0); rewatch(); render(); }
+let toastT=null;
+function toast(msg){ document.querySelectorAll('.toast').forEach(t=>t.remove()); const t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=msg; document.body.appendChild(t); clearTimeout(toastT); toastT=setTimeout(()=>t.remove(),2600); }
+function comboPop(){ const st=document.getElementById('stage'); if(!st) return; const d=document.createElement('div'); d.className='combo'; d.textContent='COMBO!'; st.appendChild(d); setTimeout(()=>d.remove(),950); blip(988,.08); setTimeout(()=>blip(1318,.12),90); }
+function moveBelt(){ const b=document.getElementById('belt'), w=document.getElementById('cakeWrap'); if(b){ b.classList.remove('moving'); void b.offsetWidth; b.classList.add('moving'); } if(w){ w.classList.remove('slide'); void w.offsetWidth; w.classList.add('slide'); } blip(330,.06,'triangle'); }
+
+/* ================= KITCHEN LOGIC ================= */
+function startKitchen(){ state.cake=freshCake(); state.step={layer:0,i:0,phase:'build'}; state.preset=null; go('kitchen'); }
+function advance(){
+  const s=state.step; const list=s.phase==='finish'?['lettering','box']:stationsFor(s.layer);
+  if(s.phase==='build' && list[s.i]==='toppings'){ modal='layer'; render(); return; }
+  if(s.i<list.length-1){ s.i++; state.tip=null; renderStage(); moveBelt(); }
+}
+function goBack(){
+  const s=state.step;
+  if(s.i>0){ s.i--; state.tip=null; renderStage(); return; }
+  if(s.phase==='finish'){ s.phase='build'; s.layer=state.cake.layers.length-1; s.i=stationsFor(s.layer).length-1; renderStage(); return; }
+  if(s.layer>0){ state.cake.layers.pop(); s.layer--; s.i=stationsFor(s.layer).length-1; state.tip='Took that layer off. Back to the one below.'; renderStage(); return; }
+  go('bakeries');
+}
+function checkCombos(before){
+  const after=combosOf(state.cake);
+  const fresh=after.find(p=>!before.some(q=>q[0]===p[0]&&q[1]===p[1]));
+  if(fresh){ state.tip=fresh[3]; return fresh[2]>0; }
+  return false;
+}
+function presetCake(p){
+  const cake={shape:'round',size:'m',lettering:'',layers:[{batter:p.batter,baked:true,frosting:p.frosting,toppings:[]}]};
+  rngSeed=p.name.length*17+3;
+  const n=p.toppings.length;
+  cake.layers[0].toppings=p.toppings.map((id,k)=>{ const ang=(k/n)*Math.PI*2+.4; const r=n>1?.55:0; return {id,fx:Math.cos(ang)*r,fy:Math.sin(ang)*r*.8}; });
+  return cake;
+}
+function safeSwap(id,list){
+  const x=ALL[id]; if(x && !lockReason(x)) return id;
+  const alt=list.find(y=>!lockReason(y)&&y.tags.some(t=>x&&x.tags.includes(t)))||list.find(y=>!lockReason(y));
+  return alt?alt.id:null;
+}
+function localSuggest(){
+  const a=state.ai;
+  const scored=PRESETS.map(p=>{
+    const q={...p, batter:safeSwap(p.batter,BATTERS), frosting:safeSwap(p.frosting,FROSTINGS), toppings:p.toppings.filter(t=>!lockReason(ALL[t]))};
+    let sc=0; a.cravings.forEach(c=>{ if(p.tags.includes(c)) sc+=3; }); if(a.sweet) sc-=Math.abs(a.sweet-p.sweet)*2;
+    if(state.opts.has('low_sugar')) sc-=p.sweet;
+    const hits=p.tags.filter(t=>a.cravings.has(t)).map(t=>CRAVINGS.find(c=>c[0]===t)[1].toLowerCase());
+    const sweetTxt=a.sweet?SWEET.find(s=>s[0]===a.sweet)[1].toLowerCase()+' sweetness':'';
+    q.reason=p.desc+' '+(hits.length?`Picked for ${hits.join(' and ')}${sweetTxt?', '+sweetTxt:''}.`:(sweetTxt?`Picked for ${sweetTxt}.`:''));
+    return {q,sc};
+  }).filter(x=>x.q.batter&&x.q.frosting).sort((x,y)=>y.sc-x.sc).slice(0,3).map(x=>x.q);
+  return scored;
+}
+async function aiSuggest(){
+  const a=state.ai; a.loading=true; a.note=''; render();
+  let results=null;
+  if(sampleApi){
+    const safeB=BATTERS.filter(x=>!lockReason(x)).map(x=>`${x.id} (${x.name}; ${x.tags.join('/')})`);
+    const safeF=FROSTINGS.filter(x=>!lockReason(x)).map(x=>`${x.id} (${x.name}; ${x.tags.join('/')})`);
+    const safeT=TOPPINGS.filter(x=>!lockReason(x)&&x.id!=='candle').map(x=>`${x.id} (${x.name})`);
+    const prompt=`You are a warm Korean grandma baker suggesting custom cakes for a cake-building app in Seoul.
+Occasion: ${a.occasion||'not given'}. Cravings: ${[...a.cravings].join(', ')||'not given'}. Sweetness: ${a.sweet?SWEET.find(s=>s[0]===a.sweet)[1]:'not given'}.
+Customer note: ${a.text?JSON.stringify(a.text):'none'}.
+Use ONLY these ids (they are already filtered for the customer's dietary needs):
+Batters: ${safeB.join(', ')}
+Frostings: ${safeF.join(', ')}
+Toppings: ${safeT.join(', ')}
+Return ONLY JSON, no prose: {"suggestions":[{"name":"short cake name","reason":"one friendly sentence under 18 words saying why it fits","batter":"id","frosting":"id","toppings":["id", "..."]}]} with exactly 3 different suggestions and 2 to 5 toppings each (repeats allowed).`;
+    try{
+      const res=await sampleApi.json(prompt,{modelTier:'quick'});
+      const arr=(res&&res.suggestions)||[];
+      results=arr.map(r=>({name:String(r.name||'Custom cake').slice(0,32),reason:String(r.reason||'').slice(0,140),
+        batter:ALL[r.batter]&&BATTERS.includes(ALL[r.batter])&&!lockReason(ALL[r.batter])?r.batter:null,
+        frosting:ALL[r.frosting]&&FROSTINGS.includes(ALL[r.frosting])&&!lockReason(ALL[r.frosting])?r.frosting:null,
+        toppings:(r.toppings||[]).filter(t=>ALL[t]&&TOPPINGS.includes(ALL[t])&&!lockReason(ALL[t])).slice(0,6)}))
+        .filter(r=>r.batter&&r.frosting).slice(0,3);
+      if(!results.length) results=null;
+    }catch(e){ results=null; if(e&&e.code==='not_granted') sampleApi=null; }
+  }
+  if(!results){ results=localSuggest(); a.note=sampleApi?'':'Suggestions from our house recipes.'; }
+  a.results=results; a.loading=false; render();
+}
+function usePreset(i){
+  const p=state.ai.results[i]; state.preset=p;
+  const letter={Birthday:'Happy Birthday!',Anniversary:'Happy anniversary',Office:'Congrats!'};
+  state.pendingLetter=letter[state.ai.occasion]||(state.ai.occasion==='Office party'?'Congrats team!':'');
+  go('bakeries');
+}
+function pickBakery(id){
+  state.bakery=id;
+  if(state.preset){
+    const p=state.preset, b=bakery();
+    const cake=presetCake(p);
+    const L=cake.layers[0];
+    if(!stocked(ALL[L.batter],b.id)) L.batter=(BATTERS.find(x=>stocked(x,b.id)&&!lockReason(x))||{}).id;
+    if(!stocked(ALL[L.frosting],b.id)) L.frosting=(FROSTINGS.find(x=>stocked(x,b.id)&&!lockReason(x))||{}).id;
+    L.toppings=L.toppings.filter(t=>stocked(ALL[t.id],b.id));
+    cake.lettering=state.pendingLetter||'';
+    state.cake=cake; state.step={layer:0,i:5,phase:'build'};
+    state.tip=`Here's “${p.name}”. Change anything you like, dear.`;
+    go('kitchen'); state.tip=`Here's “${p.name}”. Change anything you like, dear.`; renderStage();
+  } else startKitchen();
+}
+function bake(){
+  if(state.busy) return; state.busy='oven'; renderStage(); blip(220,.15,'sawtooth');
+  let t=3; const iv=setInterval(()=>{ t--; const el=document.getElementById('ovenTimer'); if(el) el.textContent='0:0'+Math.max(t,0); blip(440,.05); },420);
+  setTimeout(()=>{ clearInterval(iv); state.busy=false; curLayer().baked=true; state.anim={type:'rise',layer:state.step.layer}; state.tip='Ding! Perfectly golden.'; blip(1046,.25,'sine'); renderStage(); },1350);
+}
+function boxIt(){
+  if(state.busy) return; state.busy='box'; renderStage(); blip(523,.1);
+  setTimeout(()=>{ blip(784,.12); },500);
+  setTimeout(()=>{ state.busy=false; go('result'); setTimeout(()=>{ blip(523,.1); setTimeout(()=>blip(659,.1),110); setTimeout(()=>blip(784,.2),220); },200); },1500);
+}
+function typeLetters(){
+  const full=state.cake.lettering; if(!full){ renderStage(); return; }
+  let n=0; state.letterShown=0;
+  const iv=setInterval(()=>{ n++; state.letterShown=n; const w=document.getElementById('cakeWrap'); if(w) w.innerHTML=cakeSVG(state.cake,{interactive:true,letterShown:n}); blip(700+n*10,.03);
+    if(n>=full.length){ clearInterval(iv); state.letterShown=null; } },50);
+}
+
+/* ================= EVENTS ================= */
+const actions={
+  home(){ go('landing'); }, dashboard(){ go('dashboard'); },
+  sound(){ state.sound=!state.sound; if(state.sound) blip(660,.08); const b=app.querySelector('[data-act="sound"]'); if(b){ b.innerHTML=state.sound?ICON_SOUND_ON:ICON_SOUND_OFF; b.setAttribute('aria-label',state.sound?'Mute sounds':'Turn sounds on'); } },
+  start(){ state.preset=null; go('options'); }, options(){ go('options'); },
+  ai(){ go('ai'); },
+  opt(v){ state.opts.has(v)?state.opts.delete(v):state.opts.add(v); if(v==='vegan'&&state.opts.has('vegan')){ state.opts.add('no_milk'); state.opts.add('no_egg'); } if(state.view==='ai') state.ai.results=null; render(); },
+  toBakeries(){ go('bakeries'); },
+  pickBakery(v){ pickBakery(v); },
+  aiOcc(v){ state.ai.occasion=state.ai.occasion===v?null:v; render(); },
+  aiCrave(v){ const c=state.ai.cravings; c.has(v)?c.delete(v):c.add(v); render(); },
+  aiSweet(v){ v=+v; state.ai.sweet=state.ai.sweet===v?null:v; render(); },
+  aiGo(){ const t=document.getElementById('aiText'); state.ai.text=t?t.value.trim():''; aiSuggest(); },
+  usePreset(v){ usePreset(+v); },
+  why(v){ const x=ALL[v]; toast(`${x.name}: ${lockReason(x)}`); blip(180,.1); },
+  pick(v){
+    const st=curStation(), L=curLayer(), c=state.cake; const before=combosOf(c);
+    if(st==='pan'){ c.shape=v; state.anim={type:'pan'}; blip(300,.08); state.tip=`A ${v} pan. Lovely.`; }
+    if(st==='size'){ c.size=v; state.anim={type:'size'}; blip(500,.06); }
+    if(st==='batter'){ if(L.batter!==v){ L.batter=v; L.baked=false; state.anim={type:'pour',layer:state.step.layer}; blip(392,.12,'triangle'); state.tip=`${ALL[v].name} batter, poured in.`; } }
+    if(st==='frosting'){ L.frosting=v; state.anim={type:'frost',layer:state.step.layer}; blip(587,.1,'triangle'); }
+    const good=checkCombos(before); renderStage(); if(good) comboPop();
+  },
+  addTop(v){
+    const L=curLayer(); if(L.toppings.length>=12){ toast('That layer is full. Tap a topping on the cake to remove one.'); return; }
+    const before=combosOf(state.cake);
+    const k=L.toppings.length; rngSeed=(Date.now()%1000)+k*31;
+    const ang=rnd()*Math.PI*2, r=.25+rnd()*.7;
+    L.toppings.push({id:v,fx:+(Math.cos(ang)*r).toFixed(2),fy:+(Math.sin(ang)*r*.8).toFixed(2)});
+    state.anim={type:'top',layer:state.step.layer,k}; blip(660+k*20,.05);
+    const good=checkCombos(before); renderStage(); if(good) comboPop();
+  },
+  rmTop(v){ const [i,k]=v.split(':').map(Number); if(state.view!=='kitchen') return; const L=state.cake.layers[i]; if(!L) return; L.toppings.splice(k,1); blip(300,.05); state.tip='Took that one off.'; renderStage(); },
+  bake(){ bake(); },
+  next(){ if(canNext()) advance(); },
+  back(){ goBack(); },
+  closeModal(v,el,e){ if(e.target!==el) return; modal=null; render(); },
+  addLayer(){ modal=null; state.cake.layers.push(newLayer()); state.step={layer:state.cake.layers.length-1,i:0,phase:'build'}; state.anim={type:'tier',layer:state.step.layer}; state.tip='A new tier! Pick its batter.'; render(); moveBelt(); },
+  finish(){ modal=null; if(!state.cake.lettering&&state.pendingLetter) state.cake.lettering=state.pendingLetter; state.step={layer:state.step.layer,i:0,phase:'finish'}; render(); moveBelt(); },
+  letter(v){ state.cake.lettering=v; const inp=document.getElementById('letterIn'); if(inp) inp.value=v; typeLetters(); updateBar(); },
+  boxIt(){ boxIt(); },
+  checkout(){ state.formErr=''; go('checkout'); },
+  toResult(){ go('result'); },
+  editCake(){ state.step={layer:state.cake.layers.length-1,i:0,phase:'finish'}; if(state.view==='tracking'){ state.preset=null; go('bakeries'); return;} go('kitchen'); },
+  mode(v){ readForm(); state.form.mode=v; render(); },
+  async pay(){
+    readForm(); const f=state.form;
+    if(!f.name){ state.formErr='Add your name so the bakery knows whose cake it is.'; return render(); }
+    if(!/^[0-9+\-\s]{9,15}$/.test(f.phone||'')){ state.formErr='Add a phone number like 010-1234-5678. We text your tracking link there.'; return render(); }
+    if(f.mode==='delivery'&&!f.addr){ state.formErr='Add a delivery address, or switch to pickup.'; return render(); }
+    state.busy=true; render();
+    const b=bakery(), p=priceOf(state.cake,state.bakery), disc=Math.round(p*GUEST_DISCOUNT/100)*100;
+    const code='CK-'+Math.random().toString(36).slice(2,6).toUpperCase();
+    const cake=JSON.parse(JSON.stringify(state.cake)); cake.layers.forEach(L=>{ L.baked=true; L.toppings=L.toppings.map(t=>({id:t.id,fx:t.fx,fy:t.fy})); });
+    const o={id:code,code,createdAt:Date.now(),bakeryId:b.id,bakeryName:b.name,cake,options:[...state.opts],
+      customer:{name:f.name,phone:f.phone,mode:f.mode,addr:f.mode==='delivery'?f.addr:''},date:f.date,time:f.time||'11:00',
+      subtotal:p,discount:disc,total:p-disc,status:'received',photo:false};
+    try{ await store.add(o); }catch(e){}
+    state.busy=false; state.orderId=code; state.order=o; go('tracking'); toast('Order placed. Tracking link sent by text (demo).');
+  },
+  share(){ const txt='I built this cake in a game and a real bakery baked it! 🎂'; if(navigator.share){ navigator.share({text:txt}).catch(()=>{}); } else toast('Sharing works from the phone app (demo).'); },
+  newCake(){ state.cake=freshCake(); state.preset=null; go('landing'); },
+  async setStatus(v){ const [id,s]=v.split('|'); const patch={status:s}; if(s==='ready') patch.photo=true; await store.update(id,patch); blip(784,.08); }
+};
+function readForm(){
+  const g=id=>{ const el=document.getElementById(id); return el?el.value.trim():undefined; };
+  const f=state.form; ['name','phone','addr','date','time'].forEach((k,j)=>{ const v=g(['fName','fPhone','fAddr','fDate','fTime'][j]); if(v!==undefined) f[k]=v; });
+}
+function updateBar(){ const bar=app.querySelector('.bar .price b'); if(bar) bar.textContent=won(priceOf(state.cake,state.bakery)); }
+app.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]'); if(!el||!app.contains(el)) return;
+  if(el.disabled) return;
+  const fn=actions[el.dataset.act]; if(fn){ e.preventDefault(); fn(el.dataset.v,el,e); }
+});
+app.addEventListener('input',e=>{
+  if(e.target.id==='letterIn'){ state.cake.lettering=e.target.value; const w=document.getElementById('cakeWrap'); if(w) w.innerHTML=cakeSVG(state.cake,{interactive:true}); updateBar(); }
+  if(e.target.id==='aiText'){ state.ai.text=e.target.value; }
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&modal){ modal=null; render(); } });
+
+render();
+</script>
+</body>
+</html>
