@@ -8,6 +8,7 @@ import type { createHealthController } from '../controllers/healthController.js'
 import type { createSuggestionController } from '../controllers/suggestionController.js';
 import type { createOrderController } from '../controllers/orderController.js';
 import type { createDashboardController } from '../controllers/dashboardController.js';
+import type { createPartnerController } from '../controllers/partnerController.js';
 import type { AppConfig } from '../types.js';
 
 export interface Controllers {
@@ -15,6 +16,7 @@ export interface Controllers {
   suggestion: ReturnType<typeof createSuggestionController>;
   order: ReturnType<typeof createOrderController>;
   dashboard: ReturnType<typeof createDashboardController>;
+  partner: ReturnType<typeof createPartnerController>;
 }
 
 export interface RouteDeps { config: AppConfig; controllers: Controllers }

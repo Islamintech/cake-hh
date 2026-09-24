@@ -24,7 +24,7 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     corsOrigins: (env.CORS_ORIGINS || '*').split(',').map((s) => s.trim()).filter(Boolean),
     trustProxy: env.TRUST_PROXY === 'true' || env.TRUST_PROXY === '1',
     anthropicApiKey: env.ANTHROPIC_API_KEY || '',
-    anthropicModel: env.ANTHROPIC_MODEL || 'claude-opus-5',
+    anthropicModel: env.ANTHROPIC_MODEL || 'claude-opus-5-5',
     groqApiKey: env.GROQ_API_KEY || '',
     groqModel: env.GROQ_MODEL || 'openai/gpt-oss-120b',
     aiTimeoutMs: Number(env.AI_TIMEOUT_MS) || 20000,

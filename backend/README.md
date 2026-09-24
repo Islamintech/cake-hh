@@ -10,7 +10,7 @@ TypeScript (strict) on Node 20+, Express 5, SQLite. No external services are req
 cd backend
 npm install
 npm run dev        # run the TypeScript directly (tsx), restarts on file changes → http://localhost:4000
-npm test           # 19 tests: rules + every endpoint over HTTP
+npm test           # 21 tests: rules + every endpoint over HTTP
 npm run typecheck  # tsc --noEmit over src and tests
 npm run build      # compile src/ → dist/
 npm start          # run the compiled server (production)
@@ -28,6 +28,7 @@ src/
 │   ├── Bakery.ts           lookup, "can this bakery serve these options", menu, lead time
 │   ├── Cake.ts             design validation, pricing, combos, nutrition stats
 │   ├── Order.ts            placing rules, status machine, SQLite repository
+│   ├── Partner.ts          partnership applications
 │   └── database.ts         connection + schema
 ├── views/         V: the only place response JSON is shaped
 │   ├── orderView.ts, bakeryView.ts, catalogView.ts, miscViews.ts (quote, suggestions, health, errors)
@@ -78,6 +79,7 @@ All responses are JSON. Errors look like `{ "error": { "code", "message", "detai
 | POST | `/api/orders` | Place a guest order (below) → `201 { order, trackingToken }` |
 | GET | `/api/orders/:code?token=…` | Track an order (or send the `X-Tracking-Token` header) |
 | GET | `/api/orders/:code/stream?token=…` | SSE: an `order` event now and on every status change |
+| POST | `/api/partners` | Partnership form `{ company, location, reason, products, contact }` → `201 { application }` (stored in `partner_applications`) |
 
 ### Bakery dashboard (`Authorization: Bearer <key>`)
 

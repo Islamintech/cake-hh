@@ -7,6 +7,11 @@ export const quoteView = (bakery: Bakery, cake: CakeDesign, q: Quote) => ({ bake
 /** AI or house-recipe suggestions. */
 export const suggestionView = (opts: OptionSet, result: SuggestResult) => ({ options: [...opts], ...result });
 
+/** A received partnership application: only what the applicant needs to see. */
+export const partnerView = (p: { id: string; company: string; created_at: number }) => ({
+  id: p.id, company: p.company, createdAt: p.created_at,
+});
+
 export const healthView = ({ dbOk, ai }: { dbOk: boolean; ai: Suggester['provider'] }) => ({
   ok: dbOk,
   db: dbOk ? 'up' : 'down',

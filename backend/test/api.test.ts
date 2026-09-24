@@ -190,3 +190,19 @@ test('customer tracking stream pushes status changes', async () => {
   ctrl.abort();
   assert.equal((await fetch(`${base}/orders/${order.code}/stream?token=bad`)).status, 404);
 });
+
+test('partnership applications are validated, cleaned and stored', async () => {
+  const bad = await call('POST', '/partners', { body: { company: 'Mochi Lab', location: '' } });
+  assert.equal(bad.status, 400);
+  assert.equal(bad.json.error.code, 'invalid_request');
+
+  const ok = await call('POST', '/partners', { body: {
+    company: '  Mochi <b>Lab</b> ', location: 'Hongdae, Mapo-gu', reason: 'More orders without DMs',
+    products: 'Rice cakes, cream cakes', contact: 'mochi@example.com, 010-2222-3333',
+  } });
+  assert.equal(ok.status, 201);
+  assert.equal(ok.json.application.company, 'Mochi bLab/b');
+  assert.equal(typeof ok.json.application.id, 'string');
+  const row = db.prepare('SELECT company, contact FROM partner_applications WHERE id = ?').get(ok.json.application.id) as { company: string; contact: string };
+  assert.deepEqual(row, { company: 'Mochi bLab/b', contact: 'mochi@example.com, 010-2222-3333' });
+});

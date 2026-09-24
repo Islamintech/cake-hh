@@ -16,7 +16,7 @@ const cake = (over: Record<string, unknown> = {}): CakeDesign => ({
   ...over,
 }) as CakeDesign;
 const bk = (id: string) => Bakery.findById(id)!;
-const aiCfg = { groqApiKey: '', groqModel: 'openai/gpt-oss-120b', anthropicApiKey: '', anthropicModel: 'claude-opus-5', aiTimeoutMs: 1000 };
+const aiCfg = { groqApiKey: '', groqModel: 'openai/gpt-oss-120b', anthropicApiKey: '', anthropicModel: 'claude-opus-5-5', aiTimeoutMs: 1000 };
 
 test('vegan implies no milk and no egg; unknown options rejected', () => {
   const o = opts('vegan');

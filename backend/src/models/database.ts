@@ -36,6 +36,17 @@ CREATE TABLE IF NOT EXISTS order_events (
   at        INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_events_order ON order_events (order_id, at);
+
+CREATE TABLE IF NOT EXISTS partner_applications (
+  id         TEXT PRIMARY KEY,
+  company    TEXT NOT NULL,
+  location   TEXT NOT NULL,
+  reason     TEXT NOT NULL,
+  products   TEXT NOT NULL,
+  contact    TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_partners_created ON partner_applications (created_at DESC);
 `;
 
 /** Open (and create if needed) the SQLite database with the schema applied. */

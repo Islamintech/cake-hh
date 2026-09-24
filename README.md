@@ -35,5 +35,5 @@ Open http://localhost:3000 and build a cake. To play the bakery, open **For bake
 ## Status (Sep 24, 2026)
 
 - Web app (`frontend/`): every demo screen is ported to Next.js and wired to the API. That covers landing, dietary options, bakeries, AI suggestions, the kitchen game, result, checkout, live tracking and the bakery dashboard.
-- API (`backend/`): TypeScript, MVC, 20 tests. Server-side pricing and safety rules, AI suggestions (Groq or Claude) with a house-recipe fallback, and live updates.
+- API (`backend/`): TypeScript, MVC, 21 tests. Server-side pricing and safety rules, AI suggestions (Groq or Claude) with a house-recipe fallback, and live updates.
 - Next: image-layer sprites for the kitchen, SMS for tracking links, real payments, photo upload for bakeries, and hosting (frontend on Vercel, API on a Node host).

@@ -3,11 +3,13 @@ import express, { type Express } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import { createOrderModel } from './models/Order.js';
+import { createPartnerModel } from './models/Partner.js';
 import type { DB } from './models/database.js';
 import { createHealthController } from './controllers/healthController.js';
 import { createSuggestionController } from './controllers/suggestionController.js';
 import { createOrderController } from './controllers/orderController.js';
 import { createDashboardController } from './controllers/dashboardController.js';
+import { createPartnerController } from './controllers/partnerController.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { apiRouter, type Controllers } from './routes/index.js';
@@ -31,6 +33,7 @@ export function createApp({ db, events, config, suggester, logger = console }: A
     suggestion: createSuggestionController({ suggester }),
     order: createOrderController({ Order, events }),
     dashboard: createDashboardController({ Order, events }),
+    partner: createPartnerController({ Partner: createPartnerModel(db) }),
   };
 
   const app = express();

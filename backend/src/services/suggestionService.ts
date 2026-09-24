@@ -157,7 +157,7 @@ export function createSuggester(config: AiConfig, logger: Logger = console, call
   }
   const provider = groq ? 'groq' : claude ? 'claude' : 'local';
   const model = provider === 'groq' ? config.groqModel || 'openai/gpt-oss-120b'
-    : provider === 'claude' ? config.anthropicModel || 'claude-opus-5'
+    : provider === 'claude' ? config.anthropicModel || 'claude-opus-5-5'
     : '';
 
   /** Raw JSON text from Groq, or null when it gave no usable answer. */

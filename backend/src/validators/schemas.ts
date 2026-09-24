@@ -45,7 +45,19 @@ export const statusSchema = z.object({
   photoUrl: z.url().refine((u) => u.startsWith('https://'), 'photoUrl must be an https URL.').max(500).optional(),
 });
 
+const field = (label: string, max: number) =>
+  z.string({ error: `${label} is required.` }).trim().min(1, `${label} is required.`).max(max, `Keep ${label.toLowerCase()} under ${max} characters.`);
+
+export const partnerSchema = z.object({
+  company: field('Company name', 80),
+  location: field('Location', 120),
+  reason: field('Why you chose us', 600),
+  products: field('Your products', 600),
+  contact: field('Contacts', 160),
+});
+
 export type QuoteBody = z.infer<typeof quoteSchema>;
 export type SuggestionBody = z.infer<typeof suggestionSchema>;
 export type OrderBody = z.infer<typeof orderSchema>;
 export type StatusBody = z.infer<typeof statusSchema>;
+export type PartnerBody = z.infer<typeof partnerSchema>;
