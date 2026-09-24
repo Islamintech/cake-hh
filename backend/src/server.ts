@@ -16,7 +16,7 @@ const suggester = createSuggester(config);
 const app = createApp({ db, events: createOrderEvents(), config, suggester });
 
 const server = app.listen(config.port, config.host, () => {
-  console.log(`Cake Kitchen API on http://localhost:${config.port}  (db: ${config.dbPath}, ai: ${suggester.enabled ? config.anthropicModel : 'local recipes'})`);
+  console.log(`Cake Kitchen API on http://localhost:${config.port}  (db: ${config.dbPath}, ai: ${suggester.enabled ? `${suggester.provider} ${suggester.model}` : 'local recipes'})`);
   if (config.usingDevKeys) {
     console.log('Dev bakery keys in use (set ADMIN_KEY / BAKERY_KEYS to override):');
     console.log(`  admin: ${config.adminKey}`);

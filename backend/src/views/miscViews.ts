@@ -1,5 +1,5 @@
 import type { HttpError } from '../utils/HttpError.js';
-import type { Bakery, CakeDesign, OptionSet, Quote, SuggestResult } from '../types.js';
+import type { Bakery, CakeDesign, OptionSet, Quote, Suggester, SuggestResult } from '../types.js';
 
 /** Price quote for a validated cake. */
 export const quoteView = (bakery: Bakery, cake: CakeDesign, q: Quote) => ({ bakeryId: bakery.id, cake, ...q });
@@ -7,10 +7,10 @@ export const quoteView = (bakery: Bakery, cake: CakeDesign, q: Quote) => ({ bake
 /** AI or house-recipe suggestions. */
 export const suggestionView = (opts: OptionSet, result: SuggestResult) => ({ options: [...opts], ...result });
 
-export const healthView = ({ dbOk, aiEnabled }: { dbOk: boolean; aiEnabled: boolean }) => ({
+export const healthView = ({ dbOk, ai }: { dbOk: boolean; ai: Suggester['provider'] }) => ({
   ok: dbOk,
   db: dbOk ? 'up' : 'down',
-  ai: aiEnabled ? 'claude' : 'local',
+  ai,
   time: new Date().toISOString(),
 });
 

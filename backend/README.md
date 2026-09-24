@@ -2,7 +2,7 @@
 
 Backend for the Cake Kitchen demo: catalog, bakery filtering, server-side pricing and dietary rules, AI cake suggestions, guest orders, live tracking and the bakery dashboard.
 
-TypeScript (strict) on Node 20+, Express 5, SQLite. No external services are required. Claude is optional; without it, suggestions come from the house recipes.
+TypeScript (strict) on Node 20+, Express 5, SQLite. No external services are required. The AI is optional: set GROQ_API_KEY (free tier) or ANTHROPIC_API_KEY. Without either, suggestions come from the house recipes.
 
 ## Run
 
@@ -40,7 +40,7 @@ src/
 ├── routes/        URL → middleware → controller action
 ├── middleware/    auth, body validation, rate limiting, request log, error handler
 ├── validators/    zod request schemas (shape only; business rules stay in models)
-├── services/      suggestionService (Claude + house recipes), orderEvents (live-update hub)
+├── services/      suggestionService (Groq or Claude + house recipes), orderEvents (live-update hub)
 ├── utils/         HttpError, Korea-time dates, text cleaning, secure compare/codes, SSE
 ├── config/        env loading + production checks
 ├── types.ts       shared domain types (Cake, Order, Bakery, Actor, …) + Express Request.actor
@@ -58,7 +58,7 @@ A request flows **route → middleware (auth, validate) → controller → model
 
 - **The server is the source of truth.** Prices, discounts and stats are recomputed on every quote and order. Any price the client sends is ignored.
 - **Safety filters are fixed rules, never AI.** Every ingredient is checked against the customer's options (halal, allergens, vegan) and the bakery's stock and layer limit.
-- **AI is boxed in.** Claude only sees ingredients that already passed the rules, and its output schema restricts it to those ids. Every id is then checked again. The customer's note is treated as data. On a refusal, error, timeout or missing key, the house recipes are used.
+- **AI is boxed in.** The model (Groq or Claude) only sees ingredients that already passed the rules, and its output schema restricts it to those ids. Every id is then checked again. The customer's note is treated as data. On a refusal, error, timeout or missing key, the house recipes are used.
 - **Guest orders stay private.** Tracking needs the secret `trackingToken` returned at checkout (the SMS link). A wrong token gets the same 404 as a missing order.
 
 ## Endpoints

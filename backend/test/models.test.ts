@@ -5,7 +5,7 @@ import { Bakery } from '../src/models/Bakery.js';
 import { normalizeOptions, lockReason } from '../src/models/DietaryOptions.js';
 import { validateCake, pricing, statsOf } from '../src/models/Cake.js';
 import { nextStatuses } from '../src/models/Order.js';
-import { localSuggest, sanitizeSuggestions, createSuggester, type ModelCaller } from '../src/services/suggestionService.js';
+import { localSuggest, sanitizeSuggestions, createSuggester, type GroqCaller, type ModelCaller } from '../src/services/suggestionService.js';
 import type { CakeDesign } from '../src/types.js';
 
 const opts = (...ids: string[]) => normalizeOptions(ids).opts!;
@@ -16,6 +16,7 @@ const cake = (over: Record<string, unknown> = {}): CakeDesign => ({
   ...over,
 }) as CakeDesign;
 const bk = (id: string) => Bakery.findById(id)!;
+const aiCfg = { groqApiKey: '', groqModel: 'openai/gpt-oss-120b', anthropicApiKey: '', anthropicModel: 'claude-opus-5', aiTimeoutMs: 1000 };
 
 test('vegan implies no milk and no egg; unknown options rejected', () => {
   const o = opts('vegan');
@@ -113,7 +114,6 @@ test('AI output is re-checked: locked/unknown/misplaced ids are dropped', () => 
 
 test('Claude path: sends enum-constrained schema, sanitizes output, falls back on refusal/error', async () => {
   const silent = { warn() {}, error() {} };
-  const cfg = { anthropicApiKey: '', anthropicModel: 'claude-opus-5', aiTimeoutMs: 1000 };
   let sent: Parameters<ModelCaller>[0] | undefined;
   const reply = (stop_reason: 'end_turn' | 'refusal', text: string) =>
     ({ stop_reason, content: [{ type: 'text', text, citations: null }] }) as unknown as Awaited<ReturnType<ModelCaller>>;
@@ -129,7 +129,7 @@ test('Claude path: sends enum-constrained schema, sanitizes output, falls back o
   ] });
 
   const input = { occasion: null, cravings: ['fruity'], sweet: null, text: 'hi' };
-  const ok = await createSuggester(cfg, silent, fake(reply('end_turn', json))).suggest(input, opts('vegan'));
+  const ok = await createSuggester(aiCfg, silent, { claude: fake(reply('end_turn', json)) }).suggest(input, opts('vegan'));
   assert.equal(ok.source, 'ai');
   assert.deepEqual(ok.suggestions.map((s) => s.name), ['Oat Dream']);
   assert.deepEqual(ok.suggestions[0]!.toppings, ['straw']);
@@ -140,7 +140,47 @@ test('Claude path: sends enum-constrained schema, sanitizes output, falls back o
   assert.match(String(sent!.messages[0]!.content), /<customer_note>hi<\/customer_note>/);
 
   for (const res of [reply('refusal', ''), reply('end_turn', 'not json'), new Error('network down')]) {
-    const r = await createSuggester(cfg, silent, fake(res)).suggest({ ...input, cravings: [] }, opts());
+    const r = await createSuggester(aiCfg, silent, { claude: fake(res) }).suggest({ ...input, cravings: [] }, opts());
+    assert.equal(r.source, 'local');
+    assert.equal(r.suggestions.length, 3);
+  }
+});
+
+test('Groq path: strict enum-constrained schema, sanitizes output, falls back on bad output/error', async () => {
+  const silent = { warn() {}, error() {} };
+  let sent: Parameters<GroqCaller>[0] | undefined;
+  const reply = (finish_reason: 'stop' | 'length', content: string) =>
+    ({ choices: [{ index: 0, finish_reason, logprobs: null, message: { role: 'assistant', content } }] }) as unknown as Awaited<ReturnType<GroqCaller>>;
+  const fake = (res: Awaited<ReturnType<GroqCaller>> | Error): GroqCaller => async (body) => {
+    sent = body;
+    if (res instanceof Error) throw res;
+    return res;
+  };
+  type SchemaShape = { schema: { properties: { suggestions: { items: { properties: Record<string, { enum?: string[]; items?: { enum?: string[] } }> } } } } };
+  const json = JSON.stringify({ suggestions: [
+    { name: 'Oat Dream', reason: 'Light and fruity.', batter: 'oat', frosting: 'coconut', toppings: ['straw', 'cookie'] },
+    { name: 'Sneaky', reason: 'x', batter: 'vanilla', frosting: 'coconut', toppings: [] },
+  ] });
+
+  const input = { occasion: null, cravings: ['fruity'], sweet: null, text: 'hi' };
+  const s = createSuggester(aiCfg, silent, { groq: fake(reply('stop', json)) });
+  assert.equal(s.provider, 'groq');
+  assert.equal(s.model, 'openai/gpt-oss-120b');
+  const ok = await s.suggest(input, opts('vegan'));
+  assert.equal(ok.source, 'ai');
+  assert.deepEqual(ok.suggestions.map((x) => x.name), ['Oat Dream']);
+  assert.deepEqual(ok.suggestions[0]!.toppings, ['straw']);
+  assert.equal(sent!.model, 'openai/gpt-oss-120b');
+  const format = sent!.response_format as unknown as { type: string; json_schema: SchemaShape & { strict: boolean } };
+  assert.equal(format.type, 'json_schema');
+  assert.equal(format.json_schema.strict, true);
+  const item = format.json_schema.schema.properties.suggestions.items.properties;
+  assert.deepEqual(item.batter!.enum, ['oat']);
+  assert.ok(!item.toppings!.items!.enum!.includes('cookie'));
+  assert.match(String(sent!.messages[1]!.content), /<customer_note>hi<\/customer_note>/);
+
+  for (const res of [reply('length', ''), reply('stop', 'not json'), new Error('network down')]) {
+    const r = await createSuggester(aiCfg, silent, { groq: fake(res) }).suggest({ ...input, cravings: [] }, opts());
     assert.equal(r.source, 'local');
     assert.equal(r.suggestions.length, 3);
   }

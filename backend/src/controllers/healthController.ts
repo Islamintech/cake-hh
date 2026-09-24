@@ -8,7 +8,7 @@ export function createHealthController({ db, suggester }: { db: DB; suggester: S
     // GET /api/health
     show(_req: Request, res: Response) {
       const dbOk = isHealthy(db);
-      res.status(dbOk ? 200 : 503).json(healthView({ dbOk, aiEnabled: suggester.enabled }));
+      res.status(dbOk ? 200 : 503).json(healthView({ dbOk, ai: suggester.provider }));
     },
   };
 }

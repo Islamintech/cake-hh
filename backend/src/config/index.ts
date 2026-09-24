@@ -25,6 +25,8 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     trustProxy: env.TRUST_PROXY === 'true' || env.TRUST_PROXY === '1',
     anthropicApiKey: env.ANTHROPIC_API_KEY || '',
     anthropicModel: env.ANTHROPIC_MODEL || 'claude-opus-5',
+    groqApiKey: env.GROQ_API_KEY || '',
+    groqModel: env.GROQ_MODEL || 'openai/gpt-oss-120b',
     aiTimeoutMs: Number(env.AI_TIMEOUT_MS) || 20000,
     adminKey: env.ADMIN_KEY || '',
     bakeryKeys: parseBakeryKeys(env.BAKERY_KEYS),

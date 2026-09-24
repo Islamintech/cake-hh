@@ -144,6 +144,9 @@ export interface SuggestResult { source: 'ai' | 'local'; suggestions: Suggestion
 
 export interface Suggester {
   enabled: boolean;
+  provider: 'groq' | 'claude' | 'local';
+  /** Model id in use, '' when local. */
+  model: string;
   suggest(input: SuggestInput, opts: OptionSet): Promise<SuggestResult>;
 }
 
@@ -160,6 +163,8 @@ export interface AppConfig {
   trustProxy: boolean;
   anthropicApiKey: string;
   anthropicModel: string;
+  groqApiKey: string;
+  groqModel: string;
   aiTimeoutMs: number;
   adminKey: string;
   bakeryKeys: Record<string, string>;

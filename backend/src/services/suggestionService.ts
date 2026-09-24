@@ -1,7 +1,9 @@
-// "Halmeoni suggests": cake ideas from what the customer craves.
+// "Halmeoni suggests": cake ideas from what the customer craves (Groq or Claude).
 // Safety rule: the model only ever sees ingredients that already passed the fixed dietary rules,
 // its output is constrained to those ids, and every id is checked again afterwards.
 import Anthropic from '@anthropic-ai/sdk';
+import Groq from 'groq-sdk';
+import type { ChatCompletion, ChatCompletionCreateParamsNonStreaming } from 'groq-sdk/resources/chat/completions';
 import { ALL, BATTERS, FROSTINGS, TOPPINGS, PRESETS, CRAVINGS, SWEET } from '../models/catalog.js';
 import { lockReason } from '../models/DietaryOptions.js';
 import type { AppConfig, Ingredient, Logger, OptionSet, Suggester, SuggestInput, Suggestion } from '../types.js';
@@ -10,6 +12,14 @@ type CreateParams = Anthropic.Beta.Messages.MessageCreateParamsNonStreaming;
 type ModelReply = Pick<Anthropic.Beta.Messages.BetaMessage, 'stop_reason' | 'content'>;
 /** One Claude call. Injectable so tests can run without the network. */
 export type ModelCaller = (params: CreateParams) => Promise<ModelReply>;
+
+type GroqParams = ChatCompletionCreateParamsNonStreaming;
+type GroqReply = Pick<ChatCompletion, 'choices'>;
+/** One Groq call. Injectable like ModelCaller. */
+export type GroqCaller = (params: GroqParams) => Promise<GroqReply>;
+
+/** Test doubles for the providers; Groq wins if both are given. */
+export interface ModelCallers { groq?: GroqCaller; claude?: ModelCaller }
 
 const SYSTEM = `You are Bbang Halmeoni, a warm Korean grandma baker who suggests custom cakes in a cake-building app in Seoul.
 Suggest exactly 3 different cakes. Each has a short name (under 32 characters), one friendly sentence under 18 words saying why it fits,
@@ -110,24 +120,17 @@ function suggestionSchema(batters: string[], frostings: string[], toppings: stri
   };
 }
 
-export function createSuggester(config: Pick<AppConfig, 'anthropicApiKey' | 'anthropicModel' | 'aiTimeoutMs'>, logger: Logger = console, callModel?: ModelCaller): Suggester {
-  let call = callModel;
-  if (!call && config.anthropicApiKey) {
-    const client = new Anthropic({ apiKey: config.anthropicApiKey, timeout: config.aiTimeoutMs, maxRetries: 1 });
-    call = (params) => client.beta.messages.create(params);
-  }
-  const model = config.anthropicModel || 'claude-opus-5';
+/** The user prompt and the enum-constrained schema, or null if no safe base exists. */
+function buildRequest(input: SuggestInput, opts: OptionSet) {
+  const safeB = BATTERS.filter((x) => !lockReason(x, opts));
+  const safeF = FROSTINGS.filter((x) => !lockReason(x, opts));
+  const safeT = TOPPINGS.filter((x) => !lockReason(x, opts) && x.id !== 'candle');
+  if (!safeB.length || !safeF.length) return null;
 
-  async function askClaude(call: ModelCaller, input: SuggestInput, opts: OptionSet): Promise<Suggestion[] | null> {
-    const safeB = BATTERS.filter((x) => !lockReason(x, opts));
-    const safeF = FROSTINGS.filter((x) => !lockReason(x, opts));
-    const safeT = TOPPINGS.filter((x) => !lockReason(x, opts) && x.id !== 'candle');
-    if (!safeB.length || !safeF.length) return null;
-
-    const ids = (list: Ingredient[]) => list.map((x) => x.id);
-    const describe = (list: Ingredient[]) => list.map((x) => `${x.id} (${x.name}${x.tags.length ? '; ' + x.tags.join('/') : ''})`).join(', ');
-    const sweetLabel = input.sweet ? SWEET.find((s) => s[0] === input.sweet)?.[1] ?? 'not given' : 'not given';
-    const prompt = `Occasion: ${input.occasion || 'not given'}
+  const ids = (list: Ingredient[]) => list.map((x) => x.id);
+  const describe = (list: Ingredient[]) => list.map((x) => `${x.id} (${x.name}${x.tags.length ? '; ' + x.tags.join('/') : ''})`).join(', ');
+  const sweetLabel = input.sweet ? SWEET.find((s) => s[0] === input.sweet)?.[1] ?? 'not given' : 'not given';
+  const prompt = `Occasion: ${input.occasion || 'not given'}
 Cravings: ${input.cravings.join(', ') || 'not given'}
 Sweetness: ${sweetLabel}
 Dietary needs: ${[...opts].join(', ') || 'none'}
@@ -136,13 +139,53 @@ Dietary needs: ${[...opts].join(', ') || 'none'}
 Batters: ${describe(safeB)}
 Frostings: ${describe(safeF)}
 Toppings: ${describe(safeT)}`;
+  return { prompt, schema: suggestionSchema(ids(safeB), ids(safeF), ids(safeT)) };
+}
 
+type AiConfig = Pick<AppConfig, 'groqApiKey' | 'groqModel' | 'anthropicApiKey' | 'anthropicModel' | 'aiTimeoutMs'>;
+
+export function createSuggester(config: AiConfig, logger: Logger = console, callers: ModelCallers = {}): Suggester {
+  let { groq, claude } = callers;
+  if (!groq && !claude) {
+    if (config.groqApiKey) {
+      const client = new Groq({ apiKey: config.groqApiKey, timeout: config.aiTimeoutMs, maxRetries: 1 });
+      groq = (params) => client.chat.completions.create(params);
+    } else if (config.anthropicApiKey) {
+      const client = new Anthropic({ apiKey: config.anthropicApiKey, timeout: config.aiTimeoutMs, maxRetries: 1 });
+      claude = (params) => client.beta.messages.create(params);
+    }
+  }
+  const provider = groq ? 'groq' : claude ? 'claude' : 'local';
+  const model = provider === 'groq' ? config.groqModel || 'openai/gpt-oss-120b'
+    : provider === 'claude' ? config.anthropicModel || 'claude-opus-5'
+    : '';
+
+  /** Raw JSON text from Groq, or null when it gave no usable answer. */
+  async function askGroq(call: GroqCaller, prompt: string, schema: Record<string, unknown>): Promise<string | null> {
+    const res = await call({
+      model,
+      messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: prompt }],
+      // Strict mode: the reply must match the schema, so ids can only come from the enums.
+      response_format: { type: 'json_schema', json_schema: { name: 'cake_suggestions', strict: true, schema } },
+      reasoning_effort: 'low',
+      max_completion_tokens: 4000,
+    });
+    const choice = res.choices[0];
+    if (choice?.finish_reason !== 'stop') {
+      logger.warn?.(`[ai] no usable output (finish_reason=${choice?.finish_reason})`);
+      return null;
+    }
+    return choice.message.content;
+  }
+
+  /** Raw JSON text from Claude, or null when it gave no usable answer. */
+  async function askClaude(call: ModelCaller, prompt: string, schema: Record<string, unknown>): Promise<string | null> {
     const res = await call({
       model,
       max_tokens: 16000,
       system: SYSTEM,
       messages: [{ role: 'user', content: prompt }],
-      output_config: { effort: 'low', format: { type: 'json_schema', schema: suggestionSchema(ids(safeB), ids(safeF), ids(safeT)) } },
+      output_config: { effort: 'low', format: { type: 'json_schema', schema } },
       // If a safety classifier declines, the API retries on its recommended fallback model.
       fallbacks: 'default',
       betas: ['server-side-fallback-2026-07-01'],
@@ -151,25 +194,41 @@ Toppings: ${describe(safeT)}`;
       logger.warn?.(`[ai] no usable output (stop_reason=${res.stop_reason})`);
       return null;
     }
-    const text = res.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('');
+    return res.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('');
+  }
+
+  async function askModel(input: SuggestInput, opts: OptionSet): Promise<Suggestion[] | null> {
+    const req = buildRequest(input, opts);
+    if (!req) return null;
+    const text = groq ? await askGroq(groq, req.prompt, req.schema)
+      : claude ? await askClaude(claude, req.prompt, req.schema)
+      : null;
+    if (text === null) return null;
     let parsed: unknown;
     try { parsed = JSON.parse(text); } catch { logger.warn?.('[ai] output was not valid JSON'); return null; }
     const out = sanitizeSuggestions((parsed as { suggestions?: unknown } | null)?.suggestions, opts);
     return out.length ? out : null;
   }
 
+  function logError(err: unknown): void {
+    if (err instanceof Groq.AuthenticationError) logger.error?.('[ai] invalid GROQ_API_KEY');
+    else if (err instanceof Anthropic.AuthenticationError) logger.error?.('[ai] invalid ANTHROPIC_API_KEY');
+    else if (err instanceof Groq.RateLimitError || err instanceof Anthropic.RateLimitError) logger.warn?.('[ai] rate limited, using house recipes');
+    else if (err instanceof Groq.APIError || err instanceof Anthropic.APIError) logger.warn?.(`[ai] API error ${err.status}: ${err.message}`);
+    else logger.warn?.(`[ai] ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   return {
-    enabled: !!call,
+    enabled: provider !== 'local',
+    provider,
+    model,
     async suggest(input, opts) {
-      if (call) {
+      if (provider !== 'local') {
         try {
-          const ai = await askClaude(call, input, opts);
+          const ai = await askModel(input, opts);
           if (ai) return { source: 'ai', suggestions: ai, note: '' };
         } catch (err) {
-          if (err instanceof Anthropic.AuthenticationError) logger.error?.('[ai] invalid ANTHROPIC_API_KEY');
-          else if (err instanceof Anthropic.RateLimitError) logger.warn?.('[ai] rate limited, using house recipes');
-          else if (err instanceof Anthropic.APIError) logger.warn?.(`[ai] API error ${err.status}: ${err.message}`);
-          else logger.warn?.(`[ai] ${err instanceof Error ? err.message : String(err)}`);
+          logError(err);
         }
       }
       return { source: 'local', suggestions: localSuggest(input, opts), note: 'Suggestions from our house recipes.' };
