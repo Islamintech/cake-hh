@@ -2,16 +2,18 @@
 
 Backend for the Cake Kitchen demo: catalog, bakery filtering, server-side pricing and dietary rules, AI cake suggestions, guest orders, live tracking and the bakery dashboard.
 
-Node 20+, Express 5, SQLite. No external services are required. Claude is optional; without it, suggestions come from the house recipes.
+TypeScript (strict) on Node 20+, Express 5, SQLite. No external services are required. Claude is optional; without it, suggestions come from the house recipes.
 
 ## Run
 
 ```bash
 cd backend
 npm install
-npm start          # http://localhost:4000
-npm run dev        # restarts on file changes
+npm run dev        # run the TypeScript directly (tsx), restarts on file changes → http://localhost:4000
 npm test           # 18 tests: rules + every endpoint over HTTP
+npm run typecheck  # tsc --noEmit over src and tests
+npm run build      # compile src/ → dist/
+npm start          # run the compiled server (production)
 ```
 
 In development the dashboard keys are printed at startup: `dev-admin-key`, `dev-bakery-s1`, `dev-bakery-s2` and `dev-bakery-s3`. Copy `.env.example` to `.env` to change settings. With `NODE_ENV=production` the server refuses to start without real keys and an explicit `CORS_ORIGINS`.
@@ -21,31 +23,36 @@ In development the dashboard keys are printed at startup: `dev-admin-key`, `dev-
 ```
 src/
 ├── models/        M: data and business rules, no HTTP
-│   ├── catalog.js          static data: ingredients, bakeries, prices, presets
-│   ├── DietaryOptions.js   halal/allergen/vegan lock rules
-│   ├── Bakery.js           lookup, "can this bakery serve these options", menu, lead time
-│   ├── Cake.js             design validation, pricing, combos, nutrition stats
-│   ├── Order.js            placing rules, status machine, SQLite repository
-│   └── database.js         connection + schema
+│   ├── catalog.ts          static data: ingredients, bakeries, prices, presets
+│   ├── DietaryOptions.ts   halal/allergen/vegan lock rules
+│   ├── Bakery.ts           lookup, "can this bakery serve these options", menu, lead time
+│   ├── Cake.ts             design validation, pricing, combos, nutrition stats
+│   ├── Order.ts            placing rules, status machine, SQLite repository
+│   └── database.ts         connection + schema
 ├── views/         V: the only place response JSON is shaped
-│   ├── orderView.js, bakeryView.js, catalogView.js, miscViews.js (quote, suggestions, health, errors)
+│   ├── orderView.ts, bakeryView.ts, catalogView.ts, miscViews.ts (quote, suggestions, health, errors)
 ├── controllers/   C: thin; read the request, call models, render a view
-│   ├── catalogController.js     catalog, bakeries, quote
-│   ├── suggestionController.js  AI suggestions
-│   ├── orderController.js       checkout, tracking, tracking stream
-│   ├── dashboardController.js   bakery staff: list, show, status, live feed
-│   └── healthController.js
+│   ├── catalogController.ts     catalog, bakeries, quote
+│   ├── suggestionController.ts  AI suggestions
+│   ├── orderController.ts       checkout, tracking, tracking stream
+│   ├── dashboardController.ts   bakery staff: list, show, status, live feed
+│   └── healthController.ts
 ├── routes/        URL → middleware → controller action
 ├── middleware/    auth, body validation, rate limiting, request log, error handler
 ├── validators/    zod request schemas (shape only; business rules stay in models)
 ├── services/      suggestionService (Claude + house recipes), orderEvents (live-update hub)
 ├── utils/         HttpError, Korea-time dates, text cleaning, secure compare/codes, SSE
 ├── config/        env loading + production checks
-├── app.js         composition root: builds models, services and controllers, mounts routes
-└── server.js      starts the HTTP server
+├── types.ts       shared domain types (Cake, Order, Bakery, Actor, …) + Express Request.actor
+├── app.ts         composition root: builds models, services and controllers, mounts routes
+└── server.ts      starts the HTTP server
 ```
 
-A request flows **route → middleware (auth, validate) → controller → model(s) → view → JSON**. Models throw `HttpError` for rule violations, and the error handler renders them with `errorView`. Controllers that need state (the order repository, the AI service, the event hub) are factories that receive it from `app.js`. This keeps them easy to test and to swap: for example, SQLite for Postgres only touches `models/Order.js` and `models/database.js`.
+Import paths use `.js` extensions (standard for TypeScript ESM on Node); they resolve to the `.ts` files.
+
+Request body types come from the zod schemas (`z.infer`), so they can't drift from what validation accepts. Each route runs `validateBody(schema)` before its controller reads `req.body` as that type.
+
+A request flows **route → middleware (auth, validate) → controller → model(s) → view → JSON**. Models throw `HttpError` for rule violations, and the error handler renders them with `errorView`. Controllers that need state (the order repository, the AI service, the event hub) are factories that receive it from `app.ts`. This keeps them easy to test and to swap: for example, SQLite for Postgres only touches `models/Order.ts` and `models/database.ts`.
 
 ## Principles
 
@@ -139,8 +146,8 @@ The response shapes match what `demo/cake-kitchen-demo.html` already reads (`id`
 
 ## Not built yet
 
-- **SMS:** the tracking link is returned in the response. Plug an SMS provider in at the marked spot in `src/controllers/orderController.js`.
+- **SMS:** the tracking link is returned in the response. Plug an SMS provider in at the marked spot in `src/controllers/orderController.ts`.
 - **Payments:** checkout is still "(demo)".
 - **Photo upload storage:** only an https `photoUrl` is accepted.
-- **Bakery self-onboarding:** bakeries, keys and menus are configured in `src/models/catalog.js` and `.env`.
+- **Bakery self-onboarding:** bakeries, keys and menus are configured in `src/models/catalog.ts` and `.env`.
 - **Multiple servers:** live updates use an in-process event hub, which is right for a single server. Running several servers would need Redis or Postgres LISTEN/NOTIFY.
