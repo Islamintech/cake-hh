@@ -14,7 +14,7 @@ npm run typecheck
 npm run build && npm start   # production
 ```
 
-The API address comes from `NEXT_PUBLIC_API_URL`, which defaults to `http://localhost:4000`. Copy `.env.example` to `.env.local` to change it. In production, set the backend's `CORS_ORIGINS` to this app's origin.
+The app calls `/api` on its own origin and Next.js forwards it to the backend at `BACKEND_URL` (default `http://localhost:4000`), so a single URL, such as an ngrok tunnel to port 3000, serves both. Copy `.env.example` to `.env.local` to change it. To call the API directly from the browser instead, set `NEXT_PUBLIC_API_URL` and add this app's origin to the backend's `CORS_ORIGINS`.
 
 ## Screens
 

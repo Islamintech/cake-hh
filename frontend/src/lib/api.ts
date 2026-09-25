@@ -3,7 +3,8 @@ import type {
   Bakery, BakeryDetail, CakeDesign, Catalog, Order, OrderStatus, PlaceOrderBody, Quote, Staff, SuggestResponse,
 } from './types';
 
-export const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+// Empty means same origin: next.config.ts proxies /api to the backend, so one public URL (e.g. a tunnel) serves both.
+export const API_URL = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
 
 /** An error response from the API: `{ error: { code, message, details? } }`. */
 export class ApiError extends Error {
