@@ -7,14 +7,11 @@ import { won } from '@/lib/format';
 import { tokenFor } from '@/lib/myOrders';
 import type { CatalogIndex } from '@/lib/rules';
 import { useCakeStore } from '@/store/useCakeStore';
+import { Art } from '@/components/Art';
 import { CakeView } from '@/components/CakeView';
 import { useToast } from '@/components/Providers';
 import { ErrorCard, Loading, Ready } from '@/components/ui';
-import type { Order, OrderStatus } from '@/lib/types';
-
-const STEP_ICON: Record<OrderStatus, string> = {
-  received: '🧾', accepted: '👍', baking: '👩‍🍳', ready: '🎂', delivering: '🛵', delivered: '🏠', pickedup: '🛍️', declined: '✋',
-};
+import type { Order } from '@/lib/types';
 
 export default function TrackPage() {
   // useSearchParams needs a Suspense boundary in the App Router.
@@ -59,7 +56,7 @@ function Track({ ix }: { ix: CatalogIndex }) {
     <div className="pad stack">
       <div>
         <h2>Order {order.code}</h2>
-        <p className="muted">{order.bakeryName} · {order.customer.mode === 'delivery' ? 'delivery' : 'pickup'} on {order.date} at {order.time}</p>
+        <p className="muted">{order.customer.mode === 'delivery' ? `Delivery from ${order.bakeryName}` : `Pickup at ${order.bakeryName}`} on {order.date} at {order.time}.</p>
         <span className={`live ${live ? '' : 'off'}`}><i />{live ? 'Live' : 'Reconnecting…'}</span>
       </div>
 
@@ -73,7 +70,7 @@ function Track({ ix }: { ix: CatalogIndex }) {
         <ol className="steps">
           {order.steps.map((s, j) => (
             <li key={s.id} className={j < idx ? 'done' : j === idx ? 'now' : ''}>
-              <span className="dot">{j < idx ? '✓' : STEP_ICON[s.id]}</span>{s.label}
+              <span className="dot">{j < idx ? '✓' : <Art src={`status/${s.id}`} size={28} />}</span>{s.label}
             </li>
           ))}
         </ol>

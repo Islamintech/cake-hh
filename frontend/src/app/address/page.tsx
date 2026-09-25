@@ -30,7 +30,7 @@ function Address() {
   }
 
   return (
-    <form className="pad stack" onSubmit={save} noValidate style={{ flex: 1 }}>
+    <form className="pad page-form" onSubmit={save} noValidate>
       <h1 className="title" style={{ marginBottom: 6 }}>Address</h1>
       <p className="muted it" style={{ textAlign: 'center', marginBottom: 20 }}>Saved on this phone only. No account needed.</p>
       <div className="fields">
@@ -42,7 +42,7 @@ function Address() {
           value={draft.addr} onChange={(e) => setDraft({ ...draft, addr: e.target.value })} />
       </div>
       {err && <p className="err" role="alert">{err}</p>}
-      <div style={{ marginTop: 'auto', paddingTop: 30 }}><button type="submit" className="btn">Save address</button></div>
+      <div className="foot"><button type="submit" className="btn">Save address</button></div>
     </form>
   );
 }

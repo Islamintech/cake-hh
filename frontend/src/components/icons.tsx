@@ -27,18 +27,10 @@ export const UserIcon = () => (
   </svg>
 );
 
-export const SadIcon = () => (
-  <svg viewBox="0 0 128 128" aria-hidden="true" fill="none" stroke="currentColor">
-    <rect x="4" y="4" width="120" height="120" rx="30" strokeWidth="8" />
-    <ellipse cx="45" cy="54" rx="6" ry="8" fill="currentColor" stroke="none" />
-    <ellipse cx="83" cy="54" rx="6" ry="8" fill="currentColor" stroke="none" />
-    <path d="M44 92c12-8 28-8 40 0" strokeWidth="8" strokeLinecap="round" />
-  </svg>
-);
-
 export const PictureIcon = () => (
   <svg viewBox="0 0 96 96" aria-hidden="true">
     <circle cx="72" cy="24" r="8" fill="currentColor" />
     <path d="M10 60c10-12 18-20 26-20 12 0 12 28 26 28 6 0 10-6 14-10l10 10v-16l-10-8c-6 4-10 10-14 10-8 0-10-26-26-26-10 0-18 8-26 16z" fill="currentColor" />
   </svg>
 );
+

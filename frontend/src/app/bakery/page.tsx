@@ -140,14 +140,14 @@ function Orders({ ix, bakeryKey, staff, onSignOut }: { ix: CatalogIndex; bakeryK
       {orders?.map((o) => (
         <div key={o.code} className="card ord">
           <div className="ord-top"><b>{o.code}</b><span className={`status ${o.status}`}>{STATUS_LABEL[o.status]}</span></div>
-          <div className="meta">{o.bakeryName} · {o.customer.mode === 'delivery' ? 'Delivery' : 'Pickup'} {o.date} {o.time}</div>
+          <div className="meta">{o.bakeryName}: {o.customer.mode === 'delivery' ? 'delivery' : 'pickup'} on {o.date} at {o.time}</div>
           <div className="ord-body">
             <div className="mini"><CakeView ix={ix} cake={o.cake} label="Ordered cake" crop /></div>
             <div className="ing">
               {o.description.map((d) => <div key={d}>{d}</div>)}
               {o.cake.lettering && <div>Message: “{o.cake.lettering}”</div>}
               {o.options.length > 0 && <div><b>Needs: {o.options.map(optionLabel).join(', ')}</b></div>}
-              <div>{o.customer.name} · {o.customer.phone}</div>
+              <div>{o.customer.name}, {o.customer.phone}</div>
               {o.customer.mode === 'delivery' && <div>{o.customer.addr}</div>}
               <b>{won(o.total)}</b>
             </div>

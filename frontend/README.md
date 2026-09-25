@@ -57,3 +57,19 @@ src/
 - **The server decides.** The catalog, bakery menus (stock and lock reasons), prices, AI suggestions and orders all come from the API. `lib/rules.ts` only gives instant feedback while you build. The result page, checkout and order use the server's numbers.
 - **The design comes from `images/`.** `globals.css` defines it as CSS variables (with a dark mode); the kitchen game keeps the demo's animations. Inter and Silkscreen are self-hosted through `next/font`. `public/hero.jpg` is cut from the home mockup.
 - **Refresh-safe.** The cake in progress survives a reload (sessionStorage). Tracking links are saved in localStorage, so closing the tab doesn't lose an order.
+
+## Cake photos
+
+The seven house cakes use real photos from `public/cakes/` (mapped by name in `src/lib/cakePhotos.ts`). Cakes built in the kitchen have no photo, so cart, order and tracking screens keep the drawing of the exact design. The photos come from [Unsplash](https://unsplash.com) under the [Unsplash License](https://unsplash.com/license) (free to use, no permission needed):
+
+| File | Source |
+| --- | --- |
+| strawberry-cloud.jpg | https://unsplash.com/photos/cu1-a9LSmqo |
+| seoul-matcha-garden.jpg | https://images.unsplash.com/photo-1621423828877-f6afc6fafa90 |
+| midnight-chocolate.jpg | https://unsplash.com/photos/6jHpcBPw7i8 |
+| goguma-hug.jpg | https://unsplash.com/photos/X59-Zlyivh8 |
+| yuja-sunshine.jpg | https://images.unsplash.com/photo-1728911296471-8c57f645a44e |
+| velvet-crush.jpg | https://unsplash.com/photos/9g7I6elbAXw |
+| berry-garden.jpg | https://images.unsplash.com/photo-1508736375612-66c03035c629 |
+
+For the real product, replace them with photos of the partner bakeries' own cakes.

@@ -113,8 +113,8 @@ function Checkout({ ix }: { ix: CatalogIndex }) {
       <h1 className="title" style={{ marginBottom: 6 }}>Checkout</h1>
       <p className="muted it" style={{ textAlign: 'center' }}>No account needed. We&apos;ll text you a link to follow your cake.</p>
 
-      <ul className="rows" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {lines.map((x) => <li key={x.item.key}><span>{x.item.name} · {x.bakery.name}</span><span>{won(x.quote.total)}</span></li>)}
+      <ul className="rows">
+        {lines.map((x) => <li key={x.item.key}><span>{x.item.name} from {x.bakery.name}</span><span>{won(x.quote.total)}</span></li>)}
         <li className="tot"><span>Total</span><span>{won(total)}</span></li>
       </ul>
 
@@ -145,7 +145,7 @@ function Checkout({ ix }: { ix: CatalogIndex }) {
       </div>
       <p className="muted small it">Kitchens may handle other ingredients, so cross-contact is possible.</p>
       {formErr && <p className="err" role="alert">{formErr}</p>}
-      <button type="submit" className="btn" disabled={busy}>{busy ? 'Placing order…' : `Pay ${won(total)} (demo)`}</button>
+      <button type="submit" className="btn" disabled={busy}>{busy ? 'Placing order…' : `Place order, ${won(total)} (demo)`}</button>
       <Link className="btn ghost" href="/cart">Back to cart</Link>
     </form>
   );

@@ -48,7 +48,7 @@ export default function PartnershipPage() {
   }
 
   return (
-    <form className="pad stack" onSubmit={(e) => void submit(e)} noValidate style={{ flex: 1 }}>
+    <form className="pad page-form" onSubmit={(e) => void submit(e)} noValidate>
       <h1 className="title" style={{ marginBottom: 30 }}>Partnership</h1>
       <div className="fields">
         {FIELDS.map((f) => f.area ? (
@@ -61,7 +61,7 @@ export default function PartnershipPage() {
         ))}
       </div>
       {err && <p className="err" role="alert">{err}</p>}
-      <div style={{ marginTop: 'auto', paddingTop: 40 }}>
+      <div className="foot">
         <button type="submit" className="btn" disabled={busy}>{busy ? 'Sending…' : 'Submit your form'}</button>
       </div>
     </form>

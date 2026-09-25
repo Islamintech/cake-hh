@@ -6,7 +6,7 @@ export default function AboutPage() {
     <div className="pad">
       <h1 className="title" style={{ marginBottom: 0 }}>About us</h1>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="about-img" src="/hero.jpg" alt="Red velvet crumbs falling onto cream" />
+      <img className="about-img" src="/hero-1000.jpg" alt="Red velvet crumbs falling onto cream" />
       <div className="prose">
         <p>Cake Kitchen turns ordering a cake into a game. Stack the layers, spread the cream, drop the strawberries, and a small bakery in Seoul bakes exactly what you made.</p>
         <p>Halal, allergy-free, low-sugar and vegan needs are fixed rules on every ingredient, never AI guesses. Anything unsafe is locked before you can pick it.</p>

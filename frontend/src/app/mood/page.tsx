@@ -5,7 +5,8 @@ import { useCallback, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { presetCake, type CatalogIndex } from '@/lib/rules';
 import { useCakeStore } from '@/store/useCakeStore';
-import { CakeView } from '@/components/CakeView';
+import { Art } from '@/components/Art';
+import { CakePicture } from '@/components/CakePicture';
 import { CakeSheet, type SheetCake } from '@/components/CakeSheet';
 import { ErrorCard, OptionChips, Ready } from '@/components/ui';
 import type { SuggestResponse } from '@/lib/types';
@@ -39,7 +40,7 @@ function Mood({ ix }: { ix: CatalogIndex }) {
     try {
       setResult(await api.suggest({ ...ai, text: ai.text.trim(), options: opts }));
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Halmeoni could not think of anything. Try again?');
+      setError(e instanceof ApiError ? e.message : 'Suggestions didn’t load. Try again.');
     } finally {
       setLoading(false);
     }
@@ -56,7 +57,7 @@ function Mood({ ix }: { ix: CatalogIndex }) {
     <div className="pad stack">
       <h1 className="title" style={{ margin: '18px 0 4px' }}>Mood</h1>
       <div className="mood-box" aria-live="polite">
-        <div className="face" aria-hidden="true">👵</div>
+        <div className="face"><Art src={loading ? 'misc/grandma-thinking' : result ? 'misc/grandma-surprised' : 'misc/grandma'} size={48} /></div>
         <p>{loading ? 'Let me think, dear…'
           : result ? `Here are ${result.suggestions.length} cakes for your mood. Tap one to order it, or change it in the game.`
           : 'Tell me how you feel today, dear, and I’ll suggest a cake. You can change anything after.'}</p>
@@ -94,7 +95,7 @@ function Mood({ ix }: { ix: CatalogIndex }) {
           <div className="stack">
             {result.suggestions.map((r, i) => (
               <div key={r.name + i} className="card suggest">
-                <div className="mini"><CakeView ix={ix} cake={presetCake(r)} label={r.name} crop /></div>
+                <div className="mini"><CakePicture ix={ix} cake={presetCake(r)} name={r.name} /></div>
                 <div>
                   <b style={{ fontSize: 18 }}>{r.name}</b>
                   <p className="muted small" style={{ margin: '2px 0 8px' }}>{r.reason}</p>

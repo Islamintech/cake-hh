@@ -31,32 +31,6 @@ export function shade(hex: string, amt: number): string {
   return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
-interface Tier { bodySvg: string; topSvg: (c: string) => string; svg: string; tx: number; ty: number; rx: number; ry: number; L: number; R: number; yt: number }
-
-function tierSVG(shape: string, cx: number, yb: number, h: number, w: number, body: string, top: string, uid: string, shadeOn = true): Tier {
-  const yt = yb - h, ry = Math.max(9, w * 0.1);
-  const sh = shadeOn ? `fill="url(#sh${uid})"` : 'fill="none"';
-  if (shape === 'square') {
-    const L = cx - w / 2, R = cx + w / 2 - 16, d = ry * 1.6;
-    const bodySvg = `<rect x="${L}" y="${yt}" width="${R - L}" height="${h}" fill="${body}"/>
-      <polygon points="${R},${yt} ${R + 16},${yt - d} ${R + 16},${yb - d} ${R},${yb}" fill="${shade(body, -0.22)}"/>
-      <rect x="${L}" y="${yt}" width="${R - L}" height="${h}" ${sh}/>`;
-    const topSvg = (c: string) => `<polygon points="${L},${yt} ${L + 16},${yt - d} ${R + 16},${yt - d} ${R},${yt}" fill="${c}"/>`;
-    return { bodySvg, topSvg, svg: bodySvg + topSvg(top), tx: cx, ty: yt - d / 2, rx: (w - 32) / 2, ry: d / 2, L, R, yt };
-  }
-  const bw = shape === 'heart' ? w * 0.9 : w;
-  const L = cx - bw / 2, R = cx + bw / 2, rx = bw / 2;
-  const topSvg = (c: string) => {
-    if (shape !== 'heart') return `<ellipse cx="${cx}" cy="${yt}" rx="${rx}" ry="${ry}" fill="${c}"/>`;
-    const hw = w * 0.62, hy = ry * 1.9;
-    return `<ellipse cx="${cx}" cy="${yt}" rx="${rx}" ry="${ry}" fill="${shade(c, -0.06)}"/>
-      <path d="M${cx},${yt + hy * 0.55} C${cx - hw},${yt - hy * 0.1} ${cx - hw * 0.5},${yt - hy * 1.05} ${cx},${yt - hy * 0.35} C${cx + hw * 0.5},${yt - hy * 1.05} ${cx + hw},${yt - hy * 0.1} ${cx},${yt + hy * 0.55} Z" fill="${c}" stroke="${shade(c, -0.12)}" stroke-width="1.5"/>`;
-  };
-  const bodySvg = `<path d="M${L},${yt} V${yb} A${rx},${ry} 0 0 0 ${R},${yb} V${yt} Z" fill="${body}"/>
-    <path d="M${L},${yt} V${yb} A${rx},${ry} 0 0 0 ${R},${yb} V${yt} Z" ${sh}/>`;
-  return { bodySvg, topSvg, svg: bodySvg + topSvg(top), tx: cx, ty: yt, rx, ry, L, R, yt };
-}
-
 /** Small deterministic PRNG, so drips and textures stay the same on every render. */
 function rng(seed: number): () => number {
   let a = seed >>> 0;
@@ -112,6 +86,14 @@ function tierDefs(uid: string): string {
       <feComponentTransfer in="b" result="c"><feFuncR type="linear" slope="1.16"/><feFuncG type="linear" slope="1.16"/><feFuncB type="linear" slope="1.16"/></feComponentTransfer>
       <feComposite in="c" in2="SourceGraphic" operator="in"/>
     </filter>
+    <radialGradient id="panIn${uid}" cx=".5" cy=".15" r=".9">
+      <stop offset="0" stop-color="#000" stop-opacity=".45"/><stop offset=".7" stop-color="#000" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity=".15"/>
+    </radialGradient>
+    <filter id="brushed${uid}" x="0" y="0" width="1" height="1">
+      <feTurbulence type="fractalNoise" baseFrequency="2 .02" numOctaves="1" seed="3" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2 0 0 0 -.8" result="m"/>
+      <feComposite in="SourceGraphic" in2="m" operator="in"/>
+    </filter>
     <filter id="soft${uid}" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="3"/></filter>
     <filter id="soft1${uid}" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="1.2"/></filter>`;
 }
@@ -130,6 +112,30 @@ interface TierGeo {
   closeBack: string;
   /** Points along the top rim; `back` ones are hidden behind toppings. */
   rim: (n: number) => { x: number; y: number; back: boolean }[];
+}
+
+/** Points just inside the heart-shaped top (same curves as the heart path), for the piped border. */
+function heartRim(cx: number, yt: number, w: number, ry: number, n: number): { x: number; y: number; back: boolean }[] {
+  const hw = w * 0.62, hy = ry * 1.9;
+  type P = [number, number];
+  const bez = (a: P, b: P, c: P, d: P, t: number): P => {
+    const u = 1 - t;
+    return [u ** 3 * a[0] + 3 * u * u * t * b[0] + 3 * u * t * t * c[0] + t ** 3 * d[0], u ** 3 * a[1] + 3 * u * u * t * b[1] + 3 * u * t * t * c[1] + t ** 3 * d[1]];
+  };
+  const tip: P = [cx, yt + hy * 0.55], notch: P = [cx, yt - hy * 0.35];
+  const left: [P, P, P, P] = [tip, [cx - hw, yt - hy * 0.1], [cx - hw * 0.5, yt - hy * 1.05], notch];
+  const right: [P, P, P, P] = [notch, [cx + hw * 0.5, yt - hy * 1.05], [cx + hw, yt - hy * 0.1], tip];
+  const mid: P = [cx, yt - hy * 0.15];
+  const half = Math.max(4, Math.round(n / 2));
+  const pts: { x: number; y: number; back: boolean }[] = [];
+  for (const seg of [left, right]) {
+    for (let k = 0; k < half; k++) {
+      const [x, y] = bez(...seg, (k + 0.5) / half);
+      const px = mid[0] + (x - mid[0]) * 0.88, py = mid[1] + (y - mid[1]) * 0.84;
+      pts.push({ x: px, y: py, back: py < mid[1] });
+    }
+  }
+  return pts;
 }
 
 function tierGeo(shape: string, cx: number, yb: number, h: number, w: number): TierGeo {
@@ -166,13 +172,14 @@ function tierGeo(shape: string, cx: number, yb: number, h: number, w: number): T
     L, R, yt, yb, rx, ry, tx: cx, ty: yt, trx: rx, try: ry,
     clip: `<path d="${front}"/>`,
     body: (c) => `<path d="${front}" fill="${c}"/>`,
-    top: (c, extra = '') => `<ellipse cx="${cx}" cy="${yt}" rx="${rx}" ry="${ry}" fill="${c}" ${extra}/>${shape === 'heart' ? heart(c, extra) : ''}`,
+    // A heart sits on a slightly darker round top so its outline reads.
+    top: (c, extra = '') => `<ellipse cx="${cx}" cy="${yt}" rx="${rx}" ry="${ry}" fill="${shape === 'heart' && c.startsWith('#') ? shade(c, -0.1) : c}" ${extra}/>${shape === 'heart' ? heart(c, extra) : ''}`,
     edge: (x) => yt + ry * Math.sqrt(Math.max(0, 1 - ((x - cx) / rx) ** 2)),
     closeBack: `A${rx},${ry} 0 0 1 ${L},${yt} Z`,
-    rim: (n) => Array.from({ length: n }, (_, k) => {
+    rim: (n) => (shape === 'heart' ? heartRim(cx, yt, w, ry, n) : Array.from({ length: n }, (_, k) => {
       const a = (k / n) * Math.PI * 2 + 0.12;
       return { x: cx + Math.cos(a) * rx * 0.9, y: yt + Math.sin(a) * ry * 0.86, back: Math.sin(a) < 0 };
-    }),
+    })),
   };
 }
 
@@ -227,6 +234,46 @@ function rosette(x: number, y: number, r: number, c: string, uid: string, cls: s
     <circle r="${n1(r)}" fill="${c}"/><circle r="${n1(r)}" fill="url(#rosHi${uid})"/>
     <path d="M${n1(-r * 0.62)},${n1(r * 0.1)} A${n1(r * 0.62)},${n1(r * 0.56)} 0 1 1 ${n1(r * 0.3)},${n1(-r * 0.5)} M${n1(r * 0.42)},${n1(-r * 0.05)} A${n1(r * 0.34)},${n1(r * 0.3)} 0 1 1 ${n1(-r * 0.1)},${n1(-r * 0.2)}"
       stroke="${shade(c, -0.16)}" stroke-width="${n1(r * 0.12)}" fill="none" stroke-linecap="round" opacity=".5"/></g></g>`;
+}
+
+/**
+ * An unbaked tier: a steel cake tin (lit like the cake, with a rolled rim and a dark inside),
+ * and once poured, a glossy batter surface sitting a little below the rim.
+ * While pouring, a stream falls into the centre, the surface fills outwards and ripples spread.
+ */
+function panTier(ix: CatalogIndex, shape: string, cx: number, yb: number, w: number, layer: Layer, i: number, uid: string, anim: Anim | null): string {
+  const h = 28;
+  const g = tierGeo(shape, cx, yb, h, w);
+  const inner = tierGeo(shape, cx, yb, h, w * 0.93);
+  const clipId = `pan${uid}t${i}`;
+  const steel = '#AEB4BC';
+  let out = `<ellipse cx="${n1(cx + (shape === 'square' ? 8 : 0))}" cy="${n1(yb + 1)}" rx="${n1((g.R - g.L) / 2 + 8)}" ry="${n1(g.ry * 0.5)}" fill="#1E0F08" opacity=".3" filter="url(#soft${uid})"/>`;
+  out += `<clipPath id="${clipId}b">${g.clip}</clipPath>${g.body(steel)}`;
+  out += `<rect x="${n1(g.L - 30)}" y="${n1(g.yt - 40)}" width="${n1(g.R - g.L + 60)}" height="${h + 60}" fill="url(#cyl${uid})" clip-path="url(#${clipId}b)"/>`;
+  out += `<rect x="${n1(g.L - 30)}" y="${n1(g.yt - 40)}" width="${n1(g.R - g.L + 60)}" height="${h + 60}" fill="#fff" filter="url(#brushed${uid})" opacity=".35" clip-path="url(#${clipId}b)"/>`;
+  // Rolled rim, then the dark inside wall seen through the opening.
+  out += g.top('#E4E7EB', `stroke="#7C838C" stroke-width="1"`);
+  out += `<clipPath id="${clipId}">${inner.top('#000')}</clipPath>` + inner.top('#5B616A') + inner.top(`url(#panIn${uid})`);
+  const c = layer.batter ? ix.byId[layer.batter]?.color ?? FALLBACK_COLOR : null;
+  if (c) {
+    const pouring = anim?.type === 'pour' && anim.layer === i;
+    const surf = tierGeo(shape, cx, yb, h - 7, w * 0.93);
+    const raw = shade(c, 0.14);
+    let batter = surf.top(raw) + surf.top(`url(#topHi${uid})`)
+      + `<ellipse cx="${n1(surf.tx - surf.trx * 0.3)}" cy="${n1(surf.ty - surf.try * 0.3)}" rx="${n1(surf.trx * 0.36)}" ry="${n1(surf.try * 0.16)}" fill="#fff" opacity=".35" filter="url(#soft1${uid})"/>`;
+    if (pouring) {
+      batter = `<g class="fill">${batter}</g>` + [0, 1].map((k) =>
+        `<ellipse class="ripple" style="animation-delay:${(0.45 + k * 0.3).toFixed(2)}s" cx="${n1(surf.tx)}" cy="${n1(surf.ty)}" rx="${n1(surf.trx * 0.8)}" ry="${n1(surf.try * 0.8)}" fill="none" stroke="${shade(c, 0.4)}" stroke-width="1.4"/>`).join('');
+    }
+    out += `<g clip-path="url(#${clipId})">${batter}</g>`;
+    if (pouring) {
+      // The stream: from the bowl above the stage down to the surface, a little wider at the bottom.
+      const top = -10, bot = surf.ty;
+      out += `<path class="stream" d="M${n1(cx - 2.5)},${top} C${n1(cx - 3)},${n1(bot * 0.6)} ${n1(cx - 5)},${n1(bot - 6)} ${n1(cx - 6)},${n1(bot)} L${n1(cx + 6)},${n1(bot)} C${n1(cx + 5)},${n1(bot - 6)} ${n1(cx + 3)},${n1(bot * 0.6)} ${n1(cx + 2.5)},${top} Z" fill="${raw}"/>`
+        + `<path class="stream" d="M${n1(cx - 0.8)},${top} L${n1(cx - 1.6)},${n1(bot - 4)}" stroke="#fff" stroke-width="1" opacity=".45"/>`;
+    }
+  }
+  return out;
 }
 
 interface BakedParts { back: string; front: string; geo: TierGeo }
@@ -300,7 +347,6 @@ export function cakeSVG(ix: CatalogIndex, cake: CakeDesign, o: CakeSvgOptions): 
   const { uid } = o;
   const anim = o.anim ?? null;
   const size = (cake.size && ix.sizeById[cake.size]) || ix.sizeById.m || ix.catalog.sizes[0]!;
-  const color = (id: string | null) => (id && ix.byId[id]?.color) || FALLBACK_COLOR;
   const cx = 160, base = 222;
   const parts: string[] = [];
   const plateW = (cake.shape ? size.w : 170) / 2 + 30;
@@ -313,6 +359,7 @@ export function cakeSVG(ix: CatalogIndex, cake: CakeDesign, o: CakeSvgOptions): 
     parts.push(`<ellipse cx="${cx}" cy="${base - 30}" rx="80" ry="12" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 6" opacity=".6"/>`);
   } else {
     let yb = base;
+    const ledge: string[] = [];
     cake.layers.forEach((L, i) => {
       const w = size.w * Math.pow(0.72, i);
       const cls: string[] = [];
@@ -321,41 +368,43 @@ export function cakeSVG(ix: CatalogIndex, cake: CakeDesign, o: CakeSvgOptions): 
       if (anim?.type === 'size' && i === 0) cls.push('grow');
       let g = '';
       if (!L.baked) {
-        const h = 26;
-        g += tierSVG(cake.shape!, cx, yb, h, w, '#8E95A5', '#C9CED8', uid).svg;
-        if (L.batter) {
-          const c = color(L.batter);
-          const inner = tierSVG(cake.shape!, cx, yb - 3, h - 8, w * 0.86, c, shade(c, 0.18), uid, false);
-          g += `<g class="${anim?.type === 'pour' && anim.layer === i ? 'pour' : ''}">${inner.svg}</g>`;
-        }
+        g += panTier(ix, cake.shape!, cx, yb, w, L, i, uid, anim);
         parts.push(`<g class="${cls.join(' ')}">${g}</g>`);
-        yb = yb - h + 4;
+        yb = yb - 28 + 4;
       } else {
         const t = bakedTier(ix, cake.shape!, cx, yb, w, L, i, uid, anim);
         const geo = t.geo;
-        let g2 = t.back;
+        // Lower tiers: toppings sit in front of their piped border; the top tier's border hides the nearer toppings' feet.
+        let g2 = t.back + (i < cake.layers.length - 1 ? t.front : '');
         const hasAbove = i < cake.layers.length - 1;
         const u = Math.max(15, 21 * Math.pow(0.85, i));
+        const n = L.toppings.length;
         const placed = L.toppings.map((tp, k) => {
-          let fx = tp.fx;
-          // Keep toppings on the rim when another tier sits on top.
-          if (hasAbove && Math.abs(fx) < 0.78) fx = (fx < 0 ? -1 : 1) * (0.8 + Math.abs(tp.fy) * 0.1);
-          return { tp, k, x: geo.tx + fx * geo.trx * 0.8, y: geo.ty + tp.fy * geo.try * 0.72 + 3 };
+          // With a tier on top, only the front ledge is visible: spread them along it.
+          if (hasAbove) {
+            const a = Math.PI * (0.18 + 0.64 * ((k + 0.5) / n));
+            return { tp, k, x: geo.tx + Math.cos(a) * geo.trx * 0.86, y: geo.ty + Math.sin(a) * geo.try * 0.86 + 2 };
+          }
+          return { tp, k, x: geo.tx + tp.fx * geo.trx * 0.8, y: geo.ty + tp.fy * geo.try * 0.72 + 3 };
         });
         // Back to front, so nearer toppings overlap farther ones.
         placed.sort((a, b) => a.y - b.y).forEach(({ tp, k, x, y }) => {
           const isNew = anim?.type === 'top' && anim.layer === i && anim.k === k;
           const act = o.interactive ? ` data-act="rmTop" data-v="${i}:${k}"` : '';
           const art = toppingSVG(tp.id, x, y, u, uid, k + i * 5, isNew ? 'fall' : '');
-          g2 += art
+          const svg = art
             ? `<g class="tp"${act}>${art}</g>`
             : `<text class="tp ${isNew ? 'fall' : ''}" x="${x.toFixed(1)}" y="${(y + 2).toFixed(1)}" font-size="${Math.round(u * 0.95)}" text-anchor="middle"${act}>${esc(ix.byId[tp.id]?.e ?? '•')}</text>`;
+          // Front-ledge toppings are nearer than the tier above, so they're drawn after every tier.
+          if (hasAbove) ledge.push(svg); else g2 += svg;
         });
-        g2 += t.front;
+        if (i === cake.layers.length - 1) g2 += t.front;
         parts.push(`<g class="${cls.join(' ')}">${g2}</g>`);
         yb = geo.yt;
       }
     });
+
+    parts.push(ledge.join(''));
 
     // Lettering on the front of the top baked tier.
     const topI = cake.layers.length - 1;
@@ -377,6 +426,6 @@ export function cakeSVG(ix: CatalogIndex, cake: CakeDesign, o: CakeSvgOptions): 
   }
 
   return `<svg class="cake-svg" viewBox="${o.crop ? '40 70 240 180' : '0 0 320 250'}" role="img" aria-label="${esc(o.label ?? 'Cake preview')}" xmlns="http://www.w3.org/2000/svg">
-    <defs><linearGradient id="sh${uid}" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>${tierDefs(uid)}${toppingDefs(uid)}</defs>
+    <defs>${tierDefs(uid)}${toppingDefs(uid)}</defs>
     ${parts.join('')}</svg>`;
 }

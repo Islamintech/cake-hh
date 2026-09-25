@@ -9,6 +9,7 @@ import type { CatalogIndex } from '@/lib/rules';
 import { useCakeStore } from '@/store/useCakeStore';
 import { useCartStore } from '@/store/useCartStore';
 import { useToast } from '@/components/Providers';
+import { Art } from '@/components/Art';
 import { CakeView } from '@/components/CakeView';
 import { ErrorCard, Loading, Ready } from '@/components/ui';
 import type { BakeryDetail, Quote } from '@/lib/types';
@@ -30,6 +31,8 @@ function Result({ ix }: { ix: CatalogIndex }) {
 
   useEffect(() => {
     if (!bakeryId) { router.replace('/bakeries'); return; }
+    // Cleared after "Add to cart" while we navigate away: nothing to price.
+    if (!cake.shape) return;
     // The server re-validates the whole design and prices it: this is the price the order will use.
     Promise.all([api.quote(bakeryId, cake, opts), api.bakery(bakeryId, opts)])
       .then(([q, b]) => {
@@ -51,7 +54,7 @@ function Result({ ix }: { ix: CatalogIndex }) {
     if (!quote || !bakery) return;
     const name = preset ? preset.name : 'My custom cake';
     addToCart({ name, bakeryId: bakery.id, bakeryName: bakery.name, cake: quote.cake, opts, total: quote.total });
-    toast(`${name} is in your cart.`);
+    toast(`Added ${name} to cart`);
     startFresh();
     router.push('/cart');
   };
@@ -86,9 +89,9 @@ function Result({ ix }: { ix: CatalogIndex }) {
         <div>
           <h2>Your cake is ready to order</h2>
           <div className="stars">
-            <div className="star"><b style={{ animationDelay: '.9s' }}>⭐</b>Safe for you</div>
-            <div className={`star ${s.taste ? '' : 'off'}`}><b style={{ animationDelay: '1.1s' }}>⭐</b>{s.taste ? 'Tasty combo' : 'Odd combo'}</div>
-            <div className={`star ${s.goal ? '' : 'off'}`}><b style={{ animationDelay: '1.3s' }}>⭐</b>{s.lowSugar ? (s.goal ? 'Low sugar' : 'Too sweet') : 'Looks great'}</div>
+            <div className="star"><b style={{ animationDelay: '.9s' }}><Art src="misc/star-badge" size={40} /></b>Safe for you</div>
+            <div className={`star ${s.taste ? '' : 'off'}`}><b style={{ animationDelay: '1.1s' }}><Art src="misc/star-badge" size={40} /></b>{s.taste ? 'Tasty combo' : 'Odd combo'}</div>
+            <div className={`star ${s.goal ? '' : 'off'}`}><b style={{ animationDelay: '1.3s' }}><Art src="misc/star-badge" size={40} /></b>{s.lowSugar ? (s.goal ? 'Low sugar' : 'Too sweet') : 'Looks great'}</div>
           </div>
           <div className="stats">
             <div className="stat"><b>{s.kcal}</b><span>kcal</span></div>
@@ -99,7 +102,7 @@ function Result({ ix }: { ix: CatalogIndex }) {
           <p className="muted small">Per slice, estimated. Real values depend on the bakery&apos;s recipe.</p>
         </div>
         <div className="card">
-          <b>{shape} · {size?.people}</b>
+          <b>{shape}, for {size?.people}</b>
           <div className="ing">
             {quote.description.map((d) => <div key={d}>{d}</div>)}
             {quote.cake.lettering && <div>Message: “{quote.cake.lettering}”</div>}

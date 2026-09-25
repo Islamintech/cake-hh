@@ -13,20 +13,21 @@ import { useCakeStore } from '@/store/useCakeStore';
 import { CakeView } from '@/components/CakeView';
 import { useToast } from '@/components/Providers';
 import { ErrorCard, Loading, Ready } from '@/components/ui';
+import { Art } from '@/components/Art';
+import { itemArt } from '@/lib/art';
 import type { BakeryDetail, CakeDesign, MenuItem, Pair } from '@/lib/types';
 
+// `icon` is the picture in public/art/stations.
 const STATION_INFO: Record<Station, { icon: string; label: string; title: string; tip: string }> = {
-  pan: { icon: '🍳', label: 'Pan', title: 'Pick a pan', tip: 'Every good cake starts with a good pan, dear.' },
-  size: { icon: '👥', label: 'Size', title: 'How many people?', tip: "Don't make it too small. Someone always wants seconds!" },
-  batter: { icon: '🥣', label: 'Batter', title: 'Pour the batter', tip: 'Pick your sponge. Matcha is popular this season.' },
-  oven: { icon: '🔥', label: 'Oven', title: 'Bake it', tip: "Into the oven! Don't open the door." },
-  frosting: { icon: '🍦', label: 'Cream', title: 'Spread the cream', tip: 'Now the cream. Nice and even.' },
-  toppings: { icon: '🍓', label: 'Toppings', title: 'Add toppings', tip: 'Tap to add toppings. Tap one on the cake to take it off.' },
-  lettering: { icon: '✍️', label: 'Letters', title: 'Write a message', tip: 'Write something sweet. Short is best.' },
-  box: { icon: '🎁', label: 'Box', title: 'Box it up', tip: "All done! Let me box it for you." },
+  pan: { icon: 'pan', label: 'Pan', title: 'Pick a pan', tip: 'Every good cake starts with a good pan, dear.' },
+  size: { icon: 'size', label: 'Size', title: 'How many people?', tip: "Don't make it too small. Someone always wants seconds!" },
+  batter: { icon: 'batter', label: 'Batter', title: 'Pour the batter', tip: 'Pick your sponge. Matcha is popular this season.' },
+  oven: { icon: 'oven', label: 'Oven', title: 'Bake it', tip: "Into the oven! Don't open the door." },
+  frosting: { icon: 'cream', label: 'Cream', title: 'Spread the cream', tip: 'Now the cream. Nice and even.' },
+  toppings: { icon: 'toppings', label: 'Toppings', title: 'Add toppings', tip: 'Tap to add toppings. Tap one on the cake to take it off.' },
+  lettering: { icon: 'letters', label: 'Letters', title: 'Write a message', tip: 'Write something sweet. Short is best.' },
+  box: { icon: 'box', label: 'Box', title: 'Box it up', tip: "All done! Let me box it for you." },
 };
-const SHAPE_ICON: Record<string, string> = { round: '⚪', square: '⬜', heart: '🤍' };
-const SIZE_ICON: Record<string, string> = { s: '🧑‍🤝‍🧑', m: '👨‍👩‍👧‍👦', l: '🎉' };
 const LETTER_IDEAS = ['Happy Birthday!', '생일 축하해!', 'Love you', 'Congrats!', 'Thank you'];
 
 export default function KitchenPage() {
@@ -226,7 +227,9 @@ function Kitchen({ ix, bakery }: { ix: CatalogIndex; bakery: BakeryDetail }) {
 
   // ---- panel ----
   function tile(item: MenuItem, selected: boolean, onPick: () => void, extra?: React.ReactNode) {
-    const visual = item.e ? <span className="em">{item.e}</span> : <span className="sw" style={{ background: item.color }} />;
+    const pic = itemArt(item.id);
+    const visual = pic ? <span className="em"><Art src={pic} size={44} /></span>
+      : item.e ? <span className="em">{item.e}</span> : <span className="sw" style={{ background: item.color }} />;
     if (item.locked) {
       return (
         <button key={item.id} className="tile locked" aria-label={`${item.name}, locked. ${item.locked}`}
@@ -246,11 +249,11 @@ function Kitchen({ ix, bakery }: { ix: CatalogIndex; bakery: BakeryDetail }) {
   function panel() {
     const { shapes, sizes, rules } = ix.catalog;
     if (st === 'pan') return <div className="grid">{shapes.map((s) => (
-      <button key={s.id} className="tile" aria-pressed={cake.shape === s.id} onClick={() => pick(s.id)}><span className="em">{SHAPE_ICON[s.id] ?? '⚪'}</span>{s.name}</button>
+      <button key={s.id} className="tile" aria-pressed={cake.shape === s.id} onClick={() => pick(s.id)}><span className="em"><Art src={`shapes/${s.id}`} size={44} /></span>{s.name}</button>
     ))}</div>;
     if (st === 'size') return <div className="grid">{sizes.map((s) => (
       <button key={s.id} className="tile" aria-pressed={cake.size === s.id} onClick={() => pick(s.id)}>
-        <span className="em">{SIZE_ICON[s.id] ?? '🎂'}</span>{s.name}<span className="ko">{s.people}</span><span className="pr">{won(s.price * bakery.mult)}</span>
+        <span className="em"><Art src={`sizes/${s.id}`} size={44} /></span>{s.name}<span className="ko">{s.people}</span><span className="pr">{won(s.price * bakery.mult)}</span>
       </button>
     ))}</div>;
     if (st === 'batter') return <div className="grid">{bakery.menu.batters.map((x) => tile(x, L.batter === x.id, () => pick(x.id)))}</div>;
@@ -266,7 +269,7 @@ function Kitchen({ ix, bakery }: { ix: CatalogIndex; bakery: BakeryDetail }) {
       L.toppings.forEach((t) => { counts[t.id] = (counts[t.id] ?? 0) + 1; });
       return (
         <>
-          <p className="muted small" style={{ margin: '4px 0 0' }}>{L.toppings.length}/{rules.maxToppingsPerLayer} on this layer · tap a topping on the cake to remove it</p>
+          <p className="muted small" style={{ margin: '4px 0 0' }}>{L.toppings.length} of {rules.maxToppingsPerLayer} on this layer. Tap a topping on the cake to remove it</p>
           <div className="grid">{bakery.menu.toppings.map((x) => tile(x, !!counts[x.id], () => addTopping(x.id), counts[x.id] ? <span className="cnt">{counts[x.id]}</span> : undefined))}</div>
         </>
       );
@@ -291,14 +294,14 @@ function Kitchen({ ix, bakery }: { ix: CatalogIndex; bakery: BakeryDetail }) {
         <nav className="stations" aria-label="Kitchen stations">
           {ALL_STATIONS.map((k, j) => (
             <div key={k} className={`st ${k === st ? 'on' : ''} ${j < ci ? 'done' : ''}`} aria-current={k === st ? 'step' : undefined}>
-              <b>{STATION_INFO[k].icon}</b>{STATION_INFO[k].label}
+              <b><Art src={`stations/${STATION_INFO[k].icon}`} size={26} /></b>{STATION_INFO[k].label}
             </div>
           ))}
         </nav>
         <div className="stage">
           <div className="tiles" /><div className="window" />
           <div className="shelf"><span style={{ left: 6 }}>🫙</span><span style={{ left: 38 }}>🥄</span><span style={{ left: 66 }}>🧂</span></div>
-          <div className="halmeoni"><div className="face" aria-hidden="true">👵</div><div key={bubble} className="bubble" aria-live="polite">{bubble}</div></div>
+          <div className="halmeoni"><div className="face"><Art src={st === 'box' ? 'misc/grandma-proud' : 'misc/grandma'} size={40} /></div><div key={bubble} className="bubble" aria-live="polite">{bubble}</div></div>
           <div key={`belt${beltKey}`} className={`belt ${beltKey ? 'moving' : ''}`} />
           <div key={`wrap${beltKey}`} className={`cake-wrap ${beltKey ? 'slide' : ''}`}>
             <CakeView ix={ix} cake={cake} anim={anim} letterShown={letterShown} onRemoveTopping={removeTopping} />
@@ -307,12 +310,12 @@ function Kitchen({ ix, bakery }: { ix: CatalogIndex; bakery: BakeryDetail }) {
           {busy === 'oven' && (
             <div className="overlay"><div className="oven"><div className="knobs"><i /><i /></div><div className="timer">0:0{ovenLeft}</div><div className="door" /></div></div>
           )}
-          {busy === 'box' && <div className="overlay"><div className="box-front" /><div className="box-lid" /><div className="box-bow">🎀</div></div>}
+          {busy === 'box' && <div className="overlay"><div className="box-front" /><div className="box-lid" /><div className="box-bow"><Art src="misc/ribbon-bow" size={70} /></div></div>}
         </div>
       </div>
 
       <section className="panel">
-        <h2>{info.title}{step.phase === 'build' && cake.layers.length > 1 && <span className="muted small"> · layer {step.layer + 1}</span>}</h2>
+        <h2>{info.title}{step.phase === 'build' && cake.layers.length > 1 && <span className="muted small"> (layer {step.layer + 1})</span>}</h2>
         {panel()}
       </section>
 

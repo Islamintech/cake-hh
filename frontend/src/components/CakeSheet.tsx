@@ -7,7 +7,7 @@ import { won } from '@/lib/format';
 import { fitPresetToMenu, presetCake, type CatalogIndex } from '@/lib/rules';
 import { useCakeStore } from '@/store/useCakeStore';
 import { useCartStore } from '@/store/useCartStore';
-import { CakeView } from './CakeView';
+import { CakePicture } from './CakePicture';
 import { useToast } from './Providers';
 import { OptionChips } from './ui';
 import type { Bakery, CakeDesign, Quote } from '@/lib/types';
@@ -75,7 +75,7 @@ export function CakeSheet({ ix, item, onClose }: { ix: CatalogIndex; item: Sheet
   function addToCart() {
     if (!quote || !bakery) return;
     add({ name: item.name, bakeryId: bakery.id, bakeryName: bakery.name, cake: quote.cake, opts, total: quote.total });
-    toast(`${item.name} is in your cart.`);
+    toast(`Added ${item.name} to cart`);
     onClose();
   }
 
@@ -94,7 +94,7 @@ export function CakeSheet({ ix, item, onClose }: { ix: CatalogIndex; item: Sheet
       <div className="sheet stack" role="dialog" aria-modal="true" aria-label={item.name}>
         <div className="grab" aria-hidden="true" />
         <button ref={closeRef} className="sr-only" onClick={onClose}>Close</button>
-        <div className="pic"><CakeView ix={ix} cake={cake ?? presetCake(item)} label={item.name} crop /></div>
+        <div className="pic"><CakePicture ix={ix} cake={cake ?? presetCake(item)} name={item.name} /></div>
         <div>
           <h2>{item.name}</h2>
           <p className="muted it" style={{ margin: 0 }}>{item.desc}</p>
@@ -106,7 +106,7 @@ export function CakeSheet({ ix, item, onClose }: { ix: CatalogIndex; item: Sheet
           <h3 style={{ marginTop: 4 }}>Size</h3>
           <div className="chips" role="group" aria-label="Size">
             {ix.catalog.sizes.map((s) => (
-              <button key={s.id} className="chip" aria-pressed={size === s.id} onClick={() => setSize(s.id)}>{s.name} · {s.people}</button>
+              <button key={s.id} className="chip" aria-pressed={size === s.id} onClick={() => setSize(s.id)}>{s.name}, {s.people}</button>
             ))}
           </div>
         </div>
@@ -118,7 +118,7 @@ export function CakeSheet({ ix, item, onClose }: { ix: CatalogIndex; item: Sheet
           <div className="pick" role="group" aria-label="Bakery">
             {bakeries?.map((b) => (
               <button key={b.id} aria-pressed={bakeryId === b.id} onClick={() => setBakeryId(b.id)}>
-                <b>{b.name}</b><span>{b.area} · ready {b.lead.toLowerCase()} · {b.delivery ? 'delivery or pickup' : 'pickup only'}</span>
+                <b>{b.name}</b><span>{b.area}. Ready {b.lead.toLowerCase()}, {b.delivery ? 'delivery or pickup' : 'pickup only'}.</span>
               </button>
             ))}
           </div>

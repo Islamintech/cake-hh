@@ -7,7 +7,7 @@ import { fromPrice, popular } from '@/lib/presets';
 import { presetCake, type CatalogIndex } from '@/lib/rules';
 import { useCakeStore } from '@/store/useCakeStore';
 import { CakeSheet, type SheetCake } from './CakeSheet';
-import { CakeView } from './CakeView';
+import { CakePicture } from './CakePicture';
 import { OptionChips, Ready } from './ui';
 import type { Bakery } from '@/lib/types';
 
@@ -40,7 +40,7 @@ function Grid({ ix, mode }: { ix: CatalogIndex; mode: 'all' | 'popular' }) {
           return (
             <button key={p.name} className="cake-card" onClick={() => setOpen({ name: p.name, desc: p.desc, batter: p.batter, frosting: p.frosting, toppings: p.toppings })}
               aria-label={`${p.name}${price ? `, from ${won(price)}` : ''}`}>
-              <span className="pic"><CakeView ix={ix} cake={presetCake(p)} label={p.name} crop /></span>
+              <span className="pic"><CakePicture ix={ix} cake={presetCake(p)} name={p.name} /></span>
               <b>{p.name}</b>
               <span className="d">{p.desc}</span>
               <span className="price-pill">{price ? <><small>from</small>{won(price)}</> : '—'}</span>

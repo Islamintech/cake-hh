@@ -29,6 +29,14 @@ export function Header() {
   const close = useCallback(() => setPanel(null), []);
   const hydrated = useHydrated();
   const count = useCartStore((s) => s.items.length);
+  // The badge bumps when something is added, so the change is visible where it happened.
+  const [bump, setBump] = useState(0);
+  const prevCount = useRef<number | null>(null);
+  useEffect(() => {
+    if (!hydrated) return;
+    if (prevCount.current !== null && count > prevCount.current) setBump((n) => n + 1);
+    prevCount.current = count;
+  }, [count, hydrated]);
   const bakeryId = useCakeStore((s) => s.bakeryId);
 
   // Close on navigation.
@@ -44,7 +52,7 @@ export function Header() {
         <div className="top-actions">
           <Link className="ico" href="/cart" aria-label={`Cart${hydrated && count ? `, ${count} item${count > 1 ? 's' : ''}` : ''}`}>
             <CartIcon />
-            {hydrated && count > 0 && <i className="cart-n">{count}</i>}
+            {hydrated && count > 0 && <i key={bump} className={`cart-n ${bump ? 'bump' : ''}`}>{count}</i>}
           </Link>
           <button className="avatar" onClick={() => setPanel('profile')} aria-label="Your profile" aria-expanded={panel === 'profile'}><UserIcon /></button>
         </div>

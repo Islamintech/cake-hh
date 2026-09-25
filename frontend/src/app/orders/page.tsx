@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { myOrders, type MyOrder } from '@/lib/myOrders';
 import type { CatalogIndex } from '@/lib/rules';
 import { CakeView } from '@/components/CakeView';
-import { SadIcon } from '@/components/icons';
+import { Art } from '@/components/Art';
 import { Loading, Ready } from '@/components/ui';
 import type { Order } from '@/lib/types';
 
@@ -32,9 +32,9 @@ function Orders({ ix }: { ix: CatalogIndex }) {
   if (!rows.length) {
     return (
       <div className="empty">
-        <SadIcon />
+        <Art src="misc/empty-orders" size={160} />
         <p>No orders yet!</p>
-        <Link className="textlink" href="/cakes">Add item</Link>
+        <Link className="textlink" href="/cakes">Order a cake</Link>
       </div>
     );
   }
@@ -47,11 +47,10 @@ function Orders({ ix }: { ix: CatalogIndex }) {
           const step = order?.steps.find((s) => s.id === order.status)?.label ?? (order?.status === 'declined' ? 'Declined' : '');
           return (
             <li key={mine.code}>
-              <Link className="row-pill" href={`/track/${mine.code}?t=${encodeURIComponent(mine.token)}`}>
-                <span className="n" aria-hidden="true">#</span>
+              <Link className="row-pill plain" href={`/track/${mine.code}?t=${encodeURIComponent(mine.token)}`}>
                 <span>
                   <span className="nm">{mine.code}</span>
-                  <span className="sub">{order ? `${step} · ${order.bakeryName} · ${order.date} ${order.time}` : 'Could not load this order'}</span>
+                  <span className="sub">{order ? `${step}. ${order.bakeryName}, ${order.date} at ${order.time}.` : 'This order didn’t load. Open it to try again.'}</span>
                 </span>
                 <span className="th">{order && <CakeView ix={ix} cake={order.cake} label={`Order ${mine.code}`} crop />}</span>
               </Link>

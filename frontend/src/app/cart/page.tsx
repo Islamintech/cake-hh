@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { won } from '@/lib/format';
 import type { CatalogIndex } from '@/lib/rules';
 import { useCartStore } from '@/store/useCartStore';
-import { CakeView } from '@/components/CakeView';
-import { SadIcon } from '@/components/icons';
+import { CakePicture } from '@/components/CakePicture';
+import { Art } from '@/components/Art';
 import { Ready } from '@/components/ui';
 
 export default function CartPage() {
@@ -19,7 +19,7 @@ function Cart({ ix }: { ix: CatalogIndex }) {
   if (!items.length) {
     return (
       <div className="empty">
-        <SadIcon />
+        <Art src="misc/empty-cart" size={160} />
         <p>Sorry, cart is empty!</p>
         <Link className="textlink" href="/cakes">Add item</Link>
       </div>
@@ -36,10 +36,10 @@ function Cart({ ix }: { ix: CatalogIndex }) {
             <span className="n">{i + 1}</span>
             <span>
               <span className="nm">{x.name}</span>
-              <span className="sub">{x.bakeryName} · {won(x.total)}</span>
+              <span className="sub">{won(x.total)} at {x.bakeryName}</span>
               <button className="rm" onClick={() => remove(x.key)} aria-label={`Remove ${x.name}`}>Remove</button>
             </span>
-            <span className="th"><CakeView ix={ix} cake={x.cake} label={x.name} crop /></span>
+            <span className="th"><CakePicture ix={ix} cake={x.cake} name={x.name} /></span>
           </li>
         ))}
       </ol>
